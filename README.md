@@ -6,6 +6,7 @@ Run
 -----------
 clone the project and run with command
 ```shell
+poetry install
 poetry run python src/main.py
 ```
 Development
