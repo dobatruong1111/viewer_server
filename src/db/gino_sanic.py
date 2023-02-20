@@ -76,47 +76,48 @@ class Gino(_Gino):
             self.init_app(app)
 
     def init_app(self, app):
-        if app.config.setdefault("DB_USE_CONNECTION_FOR_REQUEST", True):
+        if app.config.setdefault("DB_USE", True):
+            if app.config.setdefault("DB_USE_CONNECTION_FOR_REQUEST", True):
 
-            @app.middleware("request")
-            async def on_request(request):
-                conn = await self.acquire(lazy=True)
-                request.ctx.connection = conn
+                @app.middleware("request")
+                async def on_request(request):
+                    conn = await self.acquire(lazy=True)
+                    request.ctx.connection = conn
 
-            @app.middleware("response")
-            async def on_response(request, _):
-                conn = getattr(request.ctx, "connection", None)
+                @app.middleware("response")
+                async def on_response(request, _):
+                    conn = getattr(request.ctx, "connection", None)
 
-                if conn is not None:
-                    await conn.release()
+                    if conn is not None:
+                        await conn.release()
 
-        @app.listener("after_server_start")
-        async def before_server_start(_, loop):
-            if app.config.get("DB_DSN"):
-                dsn = app.config.DB_DSN
-            else:
-                dsn = URL(
-                    drivername=app.config.setdefault("DB_DRIVER", "asyncpg"),
-                    host=app.config.setdefault("DB_HOST", "localhost"),
-                    port=app.config.setdefault("DB_PORT", 5432),
-                    username=app.config.setdefault("DB_USER", "postgres"),
-                    password=app.config.setdefault("DB_PASSWORD", ""),
-                    database=app.config.setdefault("DB_DATABASE", "postgres"),
+            @app.listener("after_server_start")
+            async def before_server_start(_, loop):
+                if app.config.get("DB_DSN"):
+                    dsn = app.config.DB_DSN
+                else:
+                    dsn = URL(
+                        drivername=app.config.setdefault("DB_DRIVER", "asyncpg"),
+                        host=app.config.setdefault("DB_HOST", "localhost"),
+                        port=app.config.setdefault("DB_PORT", 5432),
+                        username=app.config.setdefault("DB_USER", "postgres"),
+                        password=app.config.setdefault("DB_PASSWORD", ""),
+                        database=app.config.setdefault("DB_DATABASE", "postgres"),
+                    )
+
+                await self.set_bind(
+                    dsn,
+                    echo=app.config.setdefault("DB_ECHO", False),
+                    min_size=app.config.setdefault("DB_POOL_MIN_SIZE", 5),
+                    max_size=app.config.setdefault("DB_POOL_MAX_SIZE", 10),
+                    ssl=app.config.setdefault("DB_SSL"),
+                    loop=loop,
+                    **app.config.setdefault("DB_KWARGS", dict()),
                 )
 
-            await self.set_bind(
-                dsn,
-                echo=app.config.setdefault("DB_ECHO", False),
-                min_size=app.config.setdefault("DB_POOL_MIN_SIZE", 5),
-                max_size=app.config.setdefault("DB_POOL_MAX_SIZE", 10),
-                ssl=app.config.setdefault("DB_SSL"),
-                loop=loop,
-                **app.config.setdefault("DB_KWARGS", dict()),
-            )
-
-        @app.listener("before_server_stop")
-        async def after_server_stop(_, loop):
-            await self.pop_bind().close()
+            @app.listener("before_server_stop")
+            async def after_server_stop(_, loop):
+                await self.pop_bind().close()
 
     async def first_or_404(self, *args, **kwargs):
         rv = await self.first(*args, **kwargs)

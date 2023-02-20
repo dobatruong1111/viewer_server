@@ -1,4 +1,6 @@
+# https://python-gino.org/docs/en/master/how-to/sanic.html
 db_config = {
+    'DB_USE': False,
     'DB_HOST': '192.168.1.32',
     'DB_PORT': 6632,
     'DB_USER': 'postgres',
