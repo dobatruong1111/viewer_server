@@ -6,12 +6,11 @@ Run
 -----------
 clone the project and run with command
 ```shell
-poetry install
-poetry run python src/main.py
+sh scripts/install.sh
 ```
 Development
 -----------
 For browsing code in IDE (i.e Visual Code Studio) run below commands then open the project in your IDE
 ```shell
-poetry shell
+sh scripts/dev.sh
 ```
