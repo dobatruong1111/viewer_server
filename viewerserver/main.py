@@ -31,7 +31,7 @@ def get_application() -> FastAPI:
     application.include_router(coupon_router, prefix=settings.API_V1_STR)
     application.include_router(client_router, prefix=settings.API_V1_STR)
     application.include_router(wado_router)
-    application.mount("/viewer", StaticFiles(directory="../saola-dicom-viewer/build"), name="viewer")
+    application.mount("/viewer", StaticFiles(directory="saola-dicom-viewer/build"), name="viewer")
     return application
 
 
