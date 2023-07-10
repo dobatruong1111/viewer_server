@@ -1,0 +1,4 @@
+[submodule "saola-dicom-viewer"]
+	path = saola-dicom-viewer
+	url = https://gitlab+deploy-token-2165626:Y1z-u-HyBRPNCWczTKQ-@gitlab.com/itech-viewer/saola-dicom-viewer
+	branch = feature/3d-viewer-client

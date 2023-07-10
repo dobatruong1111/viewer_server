@@ -4,4 +4,5 @@
 export $(cat .env | xargs);
 
 # Start VTK Server
-poetry run python src/module/vtkserver/vtk_server.py --port $SERVER_PORT;
+poetry run start;
+# poetry run python src/module/vtkserver/vtk_server.py --port $SERVER_PORT;

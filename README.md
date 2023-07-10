@@ -10,7 +10,14 @@ sh scripts/install.sh
 ```
 Development
 -----------
-For browsing code in IDE (i.e Visual Code Studio) run below commands then open the project in your IDE
+
+To run the project with pre-built viewer client, run this command
 ```shell
+sh scripts/dev-server.sh
+```
+
+To manually compile the viewer client and run for development on the viewer client, run this command
+```shell
+sh scripts/build-client.sh
 sh scripts/dev.sh
 ```
