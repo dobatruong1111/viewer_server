@@ -8,6 +8,12 @@ clone the project and run with command
 ```shell
 sh scripts/install.sh
 ```
+
+Debian, Ubuntu you may need to run below command if install failed
+```shell
+export PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring
+```
+
 Development
 -----------
 
