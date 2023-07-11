@@ -12,16 +12,16 @@ $ hostname -I
 config.json
 
 {
-"configuration": {
-"host": "192.168.1.190", <--- Sửa đổi theo địa chỉ IP máy chủ
-"port": 9000, <--- Cổng để chạy Launcher Service
-"endpoint": "viewer",
-"log_dir": "./launcher", <--- Thư mục Log: chứa các tệp id.txt lưu log khi chạy process server
-"proxy_file": "./proxy/proxy-mapping.txt", <--- Lưu trữ id, host:port của process server
-"sessionURL": "ws://192.168.1.190:8081/proxy?sessionId=${id}&path=ws",  <--- Kết nối Websocket thông qua sessionURL
-        "timeout": 25,
-        "sanitize": {},
-        "fields": []
+    "configuration": {
+    "host": "192.168.1.190",    <--- Sửa đổi theo địa chỉ IP máy chủ
+    "port": 9000,               <--- Cổng để chạy Launcher Service
+    "endpoint": "viewer",
+    "log_dir": "./launcher",                   <--- Thư mục Log: chứa các tệp id.txt lưu log khi chạy process server
+    "proxy_file": "./proxy/proxy-mapping.txt", <--- Lưu trữ id, host:port của process server
+    "sessionURL": "ws://192.168.1.190:8081/proxy?sessionId=${id}&path=ws",  <--- Kết nối Websocket thông qua sessionURL
+    "timeout": 25,
+    "sanitize": {},
+    "fields": []
     },
     "resources": [
         {
@@ -47,10 +47,10 @@ config.json
                 "${studyUUID}",
                 "--seriesUUID",
                 "${seriesUUID}"
-],
-"ready_line": "Starting factory"
-}
-}
+            ],
+            "ready_line": "Starting factory"
+        }
+    }
 }
 ```
 
