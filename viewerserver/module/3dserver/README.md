@@ -12,45 +12,45 @@ $ hostname -I
 config.json
 
 {
-"configuration": {
-"host": "192.168.1.190", <--- Sửa đổi theo địa chỉ IP máy chủ
-"port": 9000, <--- Cổng để chạy Launcher Service
-"endpoint": "viewer",
-"log_dir": "./launcher", <--- Thư mục Log: chứa các tệp id.txt lưu log khi chạy process server
-"proxy_file": "./proxy/proxy-mapping.txt", <--- Lưu trữ id, host:port của process server
-"sessionURL": "ws://192.168.1.190:8081/proxy?sessionId=${id}&path=ws",  <--- Kết nối Websocket thông qua sessionURL
-        "timeout": 25,
-        "sanitize": {},
-        "fields": []
-    },
-    "resources": [
-        {
-            "host": "192.168.1.190",    <--- Sửa đổi theo địa chỉ IP máy chủ
-            "port_range": [9001, 9500]  <--- Các cổng để chạy các process server
+    "configuration": {
+    "host": "192.168.1.190",    <--- Sửa đổi theo địa chỉ IP máy chủ
+    "port": 9000,               <--- Cổng để chạy Launcher Service
+    "endpoint": "viewer",
+    "log_dir": "./launcher",    <--- Thư mục Log: chứa các tệp id.txt lưu log khi chạy process server
+    "proxy_file": "./proxy/proxy-mapping.txt",                              <--- Lưu trữ id, host:port của process server
+    "sessionURL": "ws://192.168.1.190:8081/proxy?sessionId=${id}&path=ws",  <--- Kết nối Websocket thông qua sessionURL
+            "timeout": 25,
+            "sanitize": {},
+            "fields": []
+        },
+        "resources": [
+            {
+                "host": "192.168.1.190",    <--- Sửa đổi theo địa chỉ IP máy chủ
+                "port_range": [9001, 9500]  <--- Các cổng để chạy các process server
+            }
+        ],
+        "properties": {},
+        "apps": {
+            "viewer": {
+                "cmd": [
+                    "poetry",
+                    "run",
+                    "python",
+                    "./viewerserver/module/3dserver/vtk_server.py",
+                    "--host",
+                    "${host}",
+                    "--port",
+                    "${port}",
+                    "--authKey",
+                    "${secret}",
+                    "--studyUUID",
+                    "${studyUUID}",
+                    "--seriesUUID",
+                    "${seriesUUID}"
+                ],
+            "ready_line": "Starting factory"
         }
-    ],
-    "properties": {},
-    "apps": {
-        "viewer": {
-            "cmd": [
-                "poetry",
-                "run",
-                "python",
-                "./viewerserver/module/3dserver/vtk_server.py",
-                "--host",
-                "${host}",
-                "--port",
-                "${port}",
-                "--authKey",
-                "${secret}",
-                "--studyUUID",
-                "${studyUUID}",
-                "--seriesUUID",
-                "${seriesUUID}"
-],
-"ready_line": "Starting factory"
-}
-}
+    }
 }
 ```
 
