@@ -23,7 +23,7 @@
                 "poetry", 
                 "run",
                 "python",
-                "./viewerserver/module/3dserver/vtk_server.py",
+                "vtk_server.py",
                 "--host",
                 "${host}",
                 "--port",

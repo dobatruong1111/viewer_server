@@ -40,7 +40,7 @@ class Dicom3D(vtk_protocols.vtkWebProtocol):
 
     @exportRpc("vtk.initialize")
     def createVisualization(self):
-        interactor = self.getApplication().GetObjectIdMap().GetActiveObject("INTERACTOR")
+        renderWindowInteractor = self.getApplication().GetObjectIdMap().GetActiveObject("INTERACTOR")
         renderWindow = self.getView('-1')
         renderer = renderWindow.GetRenderers().GetFirstRenderer()
 
@@ -81,7 +81,7 @@ class Dicom3D(vtk_protocols.vtkWebProtocol):
         self.boxRep.SetInsideOut(True)
 
         self.widget.SetRepresentation(self.boxRep)
-        self.widget.SetInteractor(interactor)
+        self.widget.SetInteractor(renderWindowInteractor)
         self.widget.GetRepresentation().SetPlaceFactor(1)
         self.widget.GetRepresentation().PlaceWidget(self.reader.GetOutput().GetBounds())
         self.widget.SetEnabled(True)
@@ -228,6 +228,10 @@ class Dicom3D(vtk_protocols.vtkWebProtocol):
 
         renderWindow.Render()
         self.getApplication().InvokeEvent('UpdateEvent')
+
+    @exportRpc('vtk.dicom3d.length.measurement')
+    def length_measurement(self):
+        pass
 
 class IPWCallback():
     def __init__(self, planes: vtk.vtkPlanes, mapper: vtk.vtkSmartVolumeMapper):

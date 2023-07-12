@@ -155,7 +155,6 @@ class _Server(vtk_wslink.ServerProtocol):
             for i in range(indexs[0], indexs[1]):
                 ds = Dataset.from_json(metadatas[i])
                 objectUID = ds.SOPInstanceUID
-                # url = f"http://192.168.1.32:8042/wado?studyUID={studyUID}&seriesUID={seriesUID}&objectUID={objectUID}&requestType=WADO&contentType=application/dicom"
                 response = requests.get(
                     WADO_URL,
                     params={
