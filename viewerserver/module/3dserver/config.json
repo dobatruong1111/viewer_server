@@ -1,0 +1,41 @@
+{
+    "configuration": {
+        "host": "192.168.1.190",
+        "port": 9000,
+        "endpoint": "viewer",
+        "log_dir": "./launcher",
+        "proxy_file": "./proxy/proxy-mapping.txt",
+        "sessionURL": "ws://192.168.1.190:8081/proxy?sessionId=${id}&path=ws",
+        "timeout": 25,
+        "sanitize": {},
+        "fields": []
+    },
+    "resources": [
+        {
+            "host": "192.168.1.190",
+            "port_range": [9001, 9500]
+        }
+    ],
+    "properties": {},
+    "apps": {
+        "viewer": {
+            "cmd": [
+                "poetry", 
+                "run",
+                "python",
+                "vtk_server.py",
+                "--host",
+                "${host}",
+                "--port",
+                "${port}",
+                "--authKey",
+                "${secret}",
+                "--studyUUID",
+                "${studyUUID}",
+                "--seriesUUID",
+                "${seriesUUID}"
+            ],
+            "ready_line": "Starting factory"
+        }
+    }
+}
