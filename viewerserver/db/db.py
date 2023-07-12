@@ -9,6 +9,8 @@ async def get_db() -> AsyncSession:
     async with async_session() as session:
         try:
             yield session
-        finally:
             await session.commit()
+        except:
+            await session.rollback()
+        finally:
             await session.close()

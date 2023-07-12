@@ -11,6 +11,10 @@ sh scripts/install.sh
 ```
 
 ## Development
+Debian, Ubuntu you may need to run below command if install failed
+```shell
+export PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring
+```
 
 To run the project with pre-built viewer client, run this command
 
