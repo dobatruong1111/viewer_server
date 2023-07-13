@@ -40,7 +40,7 @@ from vtk.web import wslink as vtk_wslink
 from vtk.web import protocols as vtk_protocols
 
 import vtk
-from vtk_protocol import Dicom3D
+from protocol.vtk_protocol import Dicom3D
 
 import requests
 from pydicom.dataset import Dataset

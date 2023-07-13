@@ -16,8 +16,8 @@ config.json
         "host": "192.168.1.190",    <--- Sửa đổi theo địa chỉ IP máy chủ
         "port": 9000,               <--- Cổng để chạy Launcher Service
         "endpoint": "viewer",
-        "log_dir": "./launcher",                    <--- Thư mục Log: chứa các tệp id.txt lưu log khi chạy process server
-        "proxy_file": "./proxy/proxy-mapping.txt",  <--- Lưu trữ id, host:port của process server
+        "log_dir": "./viewerserver/module/3dserver/launcher",                   <--- Thư mục Log: chứa các tệp id.txt lưu log khi chạy process server
+        "proxy_file": "./viewerserver/module/3dserver/proxy/proxy-mapping.txt", <--- Lưu trữ id, host:port của process server
         "sessionURL": "ws://192.168.1.190:8081/proxy?sessionId=${id}&path=ws",  <--- Kết nối Websocket thông qua sessionURL
         "timeout": 25,
         "sanitize": {},
@@ -36,7 +36,7 @@ config.json
                 "poetry",
                 "run",
                 "python",
-                "vtk_server.py",
+                "./viewerserver/module/3dserver/vtk_server.py",
                 "--host",
                 "${host}",
                 "--port",
@@ -57,7 +57,7 @@ config.json
 ## Cấu Hình Apache Server
 
 ```
-apache2/000-default.conf
+./viewerserver/module/3dserver/apache2/000-default.conf
 
 <VirtualHost *:80>
     DocumentRoot /deploy/server/www
@@ -104,20 +104,24 @@ apache2/000-default.conf
 Build the image
 
 ```
-docker build -t itech/apache2 .
+docker build -t itech/apache2 ./viewerserver/module/3dserver/apache2
 ```
 
 Run the image on port 8081
 Replace 000-default.conf path and proxy-mapping.txt path by your exactly paths
 
 ```
-docker run -d -it --rm --name itech-apache2 -p 8081:80 -v "C:\Users\DELL E5540\Desktop\viewer-server\viewerserver\module\3dserver\apache2\000-default.conf":/etc/apache2/sites-available/000-default.conf -v "C:\Users\DELL E5540\Desktop\viewer-server\viewerserver\module\3dserver\proxy\proxy-mapping.txt":/proxy/proxy-mapping.txt itech/apache2
+On Window
+docker run -d -it --rm --name itech-apache2 -p 8081:80 -v (absolute path to 000-default.conf):/etc/apache2/sites-available/000-default.conf -v (absolute path to proxy-mapping.txt):/proxy/proxy-mapping.txt itech/apache2
+
+On Debian, Ubuntu
+docker run -d -it --rm --name itech-apache2 -p 8081:80 -v ./viewerserver/module/3dserver/apache2/000-default.conf:/etc/apache2/sites-available/000-default.conf -v ./viewerserver/module/3dserver/proxy/proxy-mapping.txt:/proxy/proxy-mapping.txt itech/apache2
 ```
 
 ### Run Launcher Service
 
 ```
-poetry run python -m wslink.launcher config.json
+poetry run python -m wslink.launcher ./viewerserver/module/3dserver/config.json
 ```
 
 ### Requests
