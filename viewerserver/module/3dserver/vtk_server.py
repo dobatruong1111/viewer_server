@@ -256,7 +256,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     _Server.configure(args)
 
-    dataPath = f"./data/{args.studyUUID}/{args.seriesUUID}"
+    dataPath = f"./viewerserver/module/3dserver/data/{args.studyUUID}/{args.seriesUUID}"
     dicomDataPath = dataPath + "/data"
     statusFilePath = dataPath + "/status.json"
 
