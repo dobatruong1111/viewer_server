@@ -44,7 +44,7 @@ class Dicom3D(vtk_protocols.vtkWebProtocol):
         renderWindow = self.getView('-1')
         renderer = renderWindow.GetRenderers().GetFirstRenderer()
 
-        path = self.dataPath if self.dicomDataPath is not None else "./data/Ankle"
+        path = self.dicomDataPath if self.dicomDataPath is not None else "./viewerserver/module/3dserver/data/Ankle"
 
         # Reader
         self.reader.SetDirectoryName(path)

@@ -29,7 +29,7 @@ MANIFEST
 # 3d server
 viewerserver/module/3dserver/launcher/
 viewerserver/module/3dserver/data/
-viewerserver/module/3dserver/proxy/
+viewerserver/module/3dserver/proxy/*.txt
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
