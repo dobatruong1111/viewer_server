@@ -70,9 +70,15 @@ class LengthMeasurementPipeline():
         Set interactor style for length measurement.
 """
 class LengthMeasurementInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
-    def __init__(self, pipeline: LengthMeasurementPipeline) -> None:
+    def __init__(
+            self, 
+            pipeline: LengthMeasurementPipeline,
+            afterMeasurementInteractorStyle: utils.AfterMeasurementInteractorStyle
+        ) -> None:
         self.pipeline = pipeline
+        self.afterMeasurementInteractorStyle = afterMeasurementInteractorStyle
         self.checkNumberOfPoints = 0 # used to check current number of points, max = 2 points
+
         self.AddObserver(vtk.vtkCommand.LeftButtonPressEvent, self.__leftButtonPressEvent)
         self.AddObserver(vtk.vtkCommand.MouseMoveEvent, self.__mouseMoveEvent)
         self.AddObserver(vtk.vtkCommand.LeftButtonReleaseEvent, self.__leftButtonReleaseEvent)
@@ -186,35 +192,9 @@ class LengthMeasurementInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
         # Override method of super class
         self.OnLeftButtonUp()
         if self.checkNumberOfPoints == 2:
-            self.pipeline.isDragging = False # Stop drawing
+            # Stop drawing
+            self.pipeline.isDragging = False 
+
             # Set interactor style when stop drawing
-            style = AfterLengthMeasurementInteractorStyle(self.pipeline)
-            self.GetInteractor().SetInteractorStyle(style)
-
-"""
-    Description:
-        UpdateLengthPositionInteractorStyle class extends vtkInteractorStyleTrackballCamera class.
-        Class used to rotate, pan,... after angle measurement.
-"""
-class AfterLengthMeasurementInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
-    def __init__(self) -> None:
-        self.pipelines = []
-        self.AddObserver(vtk.vtkCommand.MouseMoveEvent, self.__mouseMoveEvent)
-    
-    def addPipeline(self, pipeline) -> None:
-        self.pipelines.append(pipeline)
-
-    """
-        Description:
-            A handle function used to update the position of text actor when having mouse move event.
-    """
-    def __mouseMoveEvent(self, obj: vtk.vtkInteractorStyleTrackballCamera, event: str) -> None:
-        renderer = self.GetInteractor().GetRenderWindow().GetRenderers().GetFirstRenderer()
-        if len(self.pipelines):
-            for pipeline in self.pipelines:
-                points = self.pipeline.line.GetPoints()
-                # Method used to update the position of text actor
-                utils.buildTextActorLengthMeasurement(pipeline.textActor, renderer, points)
-            self.GetInteractor().Render()
-        # Override method of super class
-        self.OnMouseMove()
+            self.afterMeasurementInteractorStyle.addLengthMeasurementPipeline(self.pipeline)
+            self.GetInteractor().SetInteractorStyle(self.afterMeasurementInteractorStyle)

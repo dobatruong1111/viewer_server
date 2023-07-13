@@ -23,12 +23,6 @@ class Dicom3D(vtk_protocols.vtkWebProtocol):
         self.scalarOpacity = vtk.vtkPiecewiseFunction()
 
         self.checkLight = True
-        self.checkBox = True
-
-        # Cropping By Box
-        self.boxRep = vtk.vtkBoxRepresentation()
-        self.widget = vtk.vtkBoxWidget2()
-        self.planes = vtk.vtkPlanes()
 
     @property
     def dicomDataPath(self):
@@ -148,90 +142,6 @@ class Dicom3D(vtk_protocols.vtkWebProtocol):
 
         renderWindow.Render()
         self.getApplication().InvokeEvent('UpdateEvent')
-        
-    @exportRpc("vtk.dicom3d.presets.bone.ct")
-    def showBoneCT(self):
-        self.color.RemoveAllPoints()
-        rgbPoints = BONE_CT.get("colorMap").get("rgbPoints")
-        for point in rgbPoints:
-            self.color.AddRGBPoint(point[0], point[1], point[2], point[3])
-
-        self.scalarOpacity.RemoveAllPoints()
-        scalarOpacityRange = BONE_CT.get("transferFunction").get("scalarOpacityRange")
-        self.scalarOpacity.AddPoint(scalarOpacityRange[0], 0)
-        self.scalarOpacity.AddPoint(scalarOpacityRange[1], 1)
-
-        renderWindow = self.getView('-1')
-        renderWindow.Render()
-        self.getApplication().InvokeEvent('UpdateEvent')
-      
-    @exportRpc("vtk.dicom3d.presets.angio.ct")
-    def showAngioCT(self):
-        self.color.RemoveAllPoints()
-        rgbPoints = ANGIO_CT.get("colorMap").get("rgbPoints")
-        for point in rgbPoints:
-            self.color.AddRGBPoint(point[0], point[1], point[2], point[3])
-
-        self.scalarOpacity.RemoveAllPoints()
-        scalarOpacityRange = ANGIO_CT.get("transferFunction").get("scalarOpacityRange")
-        self.scalarOpacity.AddPoint(scalarOpacityRange[0], 0)
-        self.scalarOpacity.AddPoint(scalarOpacityRange[1], 1)
-
-        renderWindow = self.getView('-1')
-        renderWindow.Render()
-        self.getApplication().InvokeEvent('UpdateEvent')
-
-    @exportRpc("vtk.dicom3d.presets.muscle.ct")
-    def showMuscleCT(self):
-        self.color.RemoveAllPoints()
-        rgbPoints = MUSCLE_CT.get("colorMap").get("rgbPoints")
-        for point in rgbPoints:
-            self.color.AddRGBPoint(point[0], point[1], point[2], point[3])
-
-        self.scalarOpacity.RemoveAllPoints()
-        scalarOpacityRange = MUSCLE_CT.get("transferFunction").get("scalarOpacityRange")
-        self.scalarOpacity.AddPoint(scalarOpacityRange[0], 0)
-        self.scalarOpacity.AddPoint(scalarOpacityRange[1], 1)
-
-        renderWindow = self.getView('-1')
-        renderWindow.Render()
-        self.getApplication().InvokeEvent('UpdateEvent')
-
-    @exportRpc("vtk.dicom3d.presets.mip")
-    def showMip(self):
-        self.color.RemoveAllPoints()
-        rgbPoints = MIP.get("colorMap").get("rgbPoints")
-        if len(rgbPoints):
-            for point in rgbPoints:
-                self.color.AddRGBPoint(point[0], point[1], point[2], point[3])
-
-        self.scalarOpacity.RemoveAllPoints()
-        scalarOpacityRange = MIP.get("transferFunction").get("scalarOpacityRange")
-        self.scalarOpacity.AddPoint(scalarOpacityRange[0], 0)
-        self.scalarOpacity.AddPoint(scalarOpacityRange[1], 1)
-
-        renderWindow = self.getView('-1')
-        renderWindow.Render()
-        self.getApplication().InvokeEvent('UpdateEvent')
-
-    @exportRpc("vtk.dicom3d.crop")
-    def crop3d(self):
-        # self.getApplication() -> vtkWebApplication()
-        renderWindow = self.getView('-1')
-
-        if self.checkBox:
-            self.widget.On()
-            self.checkBox = False
-        else:
-            self.widget.Off()
-            self.checkBox = True
-
-        renderWindow.Render()
-        self.getApplication().InvokeEvent('UpdateEvent')
-
-    @exportRpc('vtk.dicom3d.length.measurement')
-    def length_measurement(self):
-        pass
 
 class IPWCallback():
     def __init__(self, planes: vtk.vtkPlanes, mapper: vtk.vtkSmartVolumeMapper):
