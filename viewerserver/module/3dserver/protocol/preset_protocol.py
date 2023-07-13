@@ -4,9 +4,6 @@ from protocol.vtk_protocol import Dicom3D
 from model.presets import *
 
 class Preset3D(Dicom3D):
-    def __init__(self):
-        super().__init__()
-
     @exportRpc("vtk.dicom3d.presets.bone.ct")
     def showBoneCT(self):
       self.color.RemoveAllPoints()

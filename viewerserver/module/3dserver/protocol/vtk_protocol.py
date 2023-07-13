@@ -16,6 +16,7 @@ class Dicom3D(vtk_protocols.vtkWebProtocol):
 
         # Pipeline
         self.reader = vtk.vtkDICOMImageReader()
+        self.modifierLabelmap = vtk.vtkImageData()
         self.mapper = vtk.vtkSmartVolumeMapper()
         self.volProperty = vtk.vtkVolumeProperty()
         self.volume = vtk.vtkVolume()
@@ -23,6 +24,7 @@ class Dicom3D(vtk_protocols.vtkWebProtocol):
         self.scalarOpacity = vtk.vtkPiecewiseFunction()
 
         self.checkLight = True
+        self.cellPicker = vtk.vtkCellPicker()
 
     @property
     def dicomDataPath(self):
@@ -43,6 +45,14 @@ class Dicom3D(vtk_protocols.vtkWebProtocol):
         # Reader
         self.reader.SetDirectoryName(path)
         self.reader.Update()
+
+        self.imageData = self.reader.GetOutput() # vtkImageData
+        self.modifierLabelmap.SetExtent(self.imageData.GetExtent())
+        self.modifierLabelmap.SetOrigin(self.imageData.GetOrigin())
+        self.modifierLabelmap.SetSpacing(self.imageData.GetSpacing())
+        self.modifierLabelmap.SetDirectionMatrix(self.imageData.GetDirectionMatrix())
+        self.modifierLabelmap.AllocateScalars(self.imageData.GetScalarType(), 1)
+        self.modifierLabelmap.GetPointData().GetScalars().Fill(0)
 
         # Mapper
         self.mapper.SetInputData(self.reader.GetOutput())
@@ -84,12 +94,20 @@ class Dicom3D(vtk_protocols.vtkWebProtocol):
         self.widget.AddObserver(vtk.vtkCommand.InteractionEvent, ipwcallback)
         self.widget.Off()
 
+        # Cropping Freehand
+        self.cellPicker.AddPickList(self.volume)
+        self.cellPicker.PickFromListOn()
+
         # Render
         renderer.AddVolume(self.volume)
         renderer.ResetCamera()
 
         # Render Window
         renderWindow.Render()
+
+        # Render Window Interactor
+        renderWindowInteractor.SetPicker(self.cellPicker)
+
         return self.resetCamera()
 
     @exportRpc("vtk.camera.reset")

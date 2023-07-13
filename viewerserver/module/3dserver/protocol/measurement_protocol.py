@@ -11,7 +11,6 @@ from measurement.utils import AfterMeasurementInteractorStyle
 class Measurement3D(Dicom3D):
     def __init__(self):
         super().__init__()
-
         self.afterMeasurementInteractorStyle = AfterMeasurementInteractorStyle()
 
     @exportRpc("vtk.dicom3d.length.measurement")
