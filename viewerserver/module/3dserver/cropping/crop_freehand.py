@@ -6,7 +6,8 @@ from enum import Enum
 from typing import List, Tuple
 import time
 
-import utils
+from cropping import utils
+from measurement.utils import AfterInteractorStyle
 
 class Operation(Enum): 
     INSIDE=1,
@@ -55,8 +56,10 @@ class CropFreehandInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
             contour2Dpipeline: Contour2DPipeline, 
             imageData: vtk.vtkImageData, 
             modifierLabelmap: vtk.vtkImageData, 
-            operation: Operation, 
-            mapper: vtk.vtkSmartVolumeMapper
+            operation: Operation,
+            fillValue: int,
+            mapper: vtk.vtkSmartVolumeMapper,
+            afterInteractorStyle: AfterInteractorStyle
         ) -> None:
         # Pipeline used to drawing a 2D contour on the screen
         self.contour2Dpipeline = contour2Dpipeline
@@ -68,6 +71,10 @@ class CropFreehandInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
         self.mapper = mapper
         # operation: INSIDE or OUTSIDE
         self.operation = operation
+        # Fill value
+        self.fillValue = fillValue
+        # Set when cropping finished
+        self.afterInteractorStyle = afterInteractorStyle
     
         # Events
         self.AddObserver(vtkCommand.LeftButtonPressEvent, self.__leftButtonPressEvent)
@@ -168,8 +175,8 @@ class CropFreehandInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
             print("__paintApply():", stop - start)
             self.OnLeftButtonUp()
 
-            style = vtk.vtkInteractorStyleTrackballCamera()
-            self.GetInteractor().SetInteractorStyle(style)
+            # style = vtk.vtkInteractorStyleTrackballCamera()
+            self.GetInteractor().SetInteractorStyle(self.afterInteractorStyle)
 
     '''
     Description: Extrude surfaces from the near clipping plane to the far clipping plane.
@@ -381,7 +388,7 @@ class CropFreehandInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
         Hard edge: CT-Bone, CT-Angio
         Soft edge: CT-Muscle, CT-Mip
     '''
-    def __maskVolume(self, fillValue=-1000) -> None:
+    def __maskVolume(self) -> None:
         # Hard, Soft edge
         # Thresholding of modifierLabelmap
         thresh = vtk.vtkImageThreshold()
@@ -401,7 +408,7 @@ class CropFreehandInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
         maskArray = vtk_to_numpy(maskImage.GetPointData().GetScalars()).reshape(nshape).astype(float)
         inputArray = vtk_to_numpy(self.imageData.GetPointData().GetScalars()).reshape(nshape)
 
-        resultArray = inputArray[:] * (1 - maskArray[:]) + float(fillValue) * maskArray[:] # -1000 HU: air
+        resultArray = inputArray[:] * (1 - maskArray[:]) + float(self.fillValue) * maskArray[:] # -1000 HU: air
 
         result = numpy_to_vtk(resultArray.astype(inputArray.dtype).reshape(1, -1)[0])   
         

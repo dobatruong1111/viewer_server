@@ -1,5 +1,5 @@
 import vtk
-import utils
+from measurement import utils
 from typing import List
 
 """
@@ -73,10 +73,10 @@ class LengthMeasurementInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
     def __init__(
             self, 
             pipeline: LengthMeasurementPipeline,
-            afterMeasurementInteractorStyle: utils.AfterMeasurementInteractorStyle
+            afterInteractorStyle: utils.AfterInteractorStyle
         ) -> None:
         self.pipeline = pipeline
-        self.afterMeasurementInteractorStyle = afterMeasurementInteractorStyle
+        self.afterInteractorStyle = afterInteractorStyle
         self.checkNumberOfPoints = 0 # used to check current number of points, max = 2 points
 
         self.AddObserver(vtk.vtkCommand.LeftButtonPressEvent, self.__leftButtonPressEvent)
@@ -196,5 +196,5 @@ class LengthMeasurementInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
             self.pipeline.isDragging = False 
 
             # Set interactor style when stop drawing
-            self.afterMeasurementInteractorStyle.addLengthMeasurementPipeline(self.pipeline)
-            self.GetInteractor().SetInteractorStyle(self.afterMeasurementInteractorStyle)
+            self.afterInteractorStyle.addLengthMeasurementPipeline(self.pipeline)
+            self.GetInteractor().SetInteractorStyle(self.afterInteractorStyle)

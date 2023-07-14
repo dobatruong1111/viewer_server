@@ -41,6 +41,7 @@ from vtk.web import protocols as vtk_protocols
 
 import vtk
 from protocol.vtk_protocol import Dicom3D
+from protocol.preset_protocol import Preset3D
 
 import requests
 from pydicom.dataset import Dataset
@@ -64,6 +65,7 @@ class _Server(vtk_wslink.ServerProtocol):
     # Defaults
     authKey = "wslink-secret"
     dicom3d = Dicom3D()
+    # preset3d = Preset3D()
     view = None
     dicomDataPath = None
 
@@ -202,7 +204,7 @@ class _Server(vtk_wslink.ServerProtocol):
         while self.dicomDataPath is None:
             pass
         else:
-            self.dicom3d.dataPath = self.dicomDataPath
+            self.dicom3d.dicomDataPath = self.dicomDataPath
 
     def initialize(self) -> None:
         # Bring Used Components
@@ -213,6 +215,7 @@ class _Server(vtk_wslink.ServerProtocol):
         
         # Custom API
         self.registerVtkWebProtocol(self.dicom3d)
+        # self.registerVtkWebProtocol(self.preset3d)
 
         # tell the C++ web app to use no encoding.
         # ParaViewWebPublishImageDelivery must be set to decode=False to match.

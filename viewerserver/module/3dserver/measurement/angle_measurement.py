@@ -1,6 +1,6 @@
 from typing import List
 import vtk
-import utils
+from measurement import utils
 
 """
     Description: class contains objects for angle measurement in the world coordinate system.
@@ -111,10 +111,10 @@ class AngleMeasurementInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
     def __init__(
             self, 
             pipeline: AngleMeasurementPipeline,
-            afterMeasurementInteractorStyle: utils.AfterMeasurementInteractorStyle
+            afterInteractorStyle: utils.AfterInteractorStyle
         ) -> None:
         self.pipeline = pipeline
-        self.afterMeasurementInteractorStyle = afterMeasurementInteractorStyle
+        self.afterInteractorStyle = afterInteractorStyle
         self.checkNumberOfPoints = 0 # used to check current number of points
 
         self.AddObserver(vtk.vtkCommand.LeftButtonPressEvent, self.__leftButtonPressEvent)
@@ -274,5 +274,5 @@ class AngleMeasurementInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
             self.pipeline.isDragging = False # Stop drawing
 
             # Set interactor style when stop drawing
-            self.afterMeasurementInteractorStyle.addAngleMeasurementPipeline(self.pipeline)
-            self.GetInteractor().SetInteractorStyle(self.afterMeasurementInteractorStyle)
+            self.afterInteractorStyle.addAngleMeasurementPipeline(self.pipeline)
+            self.GetInteractor().SetInteractorStyle(self.afterInteractorStyle)

@@ -227,18 +227,24 @@ def buildArcAngleMeasurement(arc: vtk.vtkArcSource, textActor: vtk.vtkTextActor,
         textActor.SetPosition(round(textActorPositionDisplay[0]), round(textActorPositionDisplay[1]))
 
 """
-    Description:
-        AfterAngleMeasurementInteractorStyle class extends vtkInteractorStyleTrackballCamera class.
-        Class used to rotate, pan,... before angle measurement.
+Description:
+    Class extends vtkInteractorStyleTrackballCamera class.
+    Class used to rotate, pan,... before angle measurement.
 """
-class AfterMeasurementInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
+class AfterInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
     def __init__(self) -> None:
         self._angle_measurement_pipelines = []
         self._length_measurement_pipelines = []
         self.AddObserver(vtk.vtkCommand.MouseMoveEvent, self.__mouseMoveEvent)
 
+    def getAngleMeasurementPipelines(self):
+        return self._angle_measurement_pipelines
+
     def addAngleMeasurementPipeline(self, pipeline):
         self._angle_measurement_pipelines.append(pipeline)
+
+    def getLengthMeasurementPipelines(self):
+        return self._length_measurement_pipelines
 
     def addLengthMeasurementPipeline(self, pipeline):
         self._length_measurement_pipelines.append(pipeline)
@@ -257,8 +263,8 @@ class AfterMeasurementInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
             self.GetInteractor().Render()
         
         if len(self._length_measurement_pipelines):
-            for pipeline in self.pipelines:
-                points = self.pipeline.line.GetPoints()
+            for pipeline in self._length_measurement_pipelines:
+                points = pipeline.line.GetPoints()
                 # Method used to update the position of text actor
                 buildTextActorLengthMeasurement(pipeline.textActor, renderer, points)
             self.GetInteractor().Render()

@@ -197,3 +197,15 @@ def normalizeMask(maskArray):
     mask = (maskArray.astype(float) - maskMin) / float(maskMax - maskMin)
 
     return mask
+
+'''
+Description: Callback class for cropping by box
+'''
+class IPWCallback():
+    def __init__(self, planes: vtk.vtkPlanes, mapper: vtk.vtkSmartVolumeMapper):
+        self.planes = planes
+        self.mapper = mapper
+
+    def __call__(self, obj: vtk.vtkBoxWidget2, event: str) -> None:
+        obj.GetRepresentation().GetPlanes(self.planes)
+        self.mapper.SetClippingPlanes(self.planes)
