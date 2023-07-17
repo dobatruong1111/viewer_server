@@ -137,7 +137,7 @@ Example: POST Request
 }
 ```
 
-Launcher Service: receive requests
+Apache Server: receive requests
 
 ```
 http://192.168.1.190:8081/viewer/
