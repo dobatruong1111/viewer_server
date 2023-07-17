@@ -41,7 +41,6 @@ from vtk.web import protocols as vtk_protocols
 
 import vtk
 from protocol.vtk_protocol import Dicom3D
-from protocol.preset_protocol import Preset3D
 
 import requests
 from pydicom.dataset import Dataset
@@ -65,7 +64,6 @@ class _Server(vtk_wslink.ServerProtocol):
     # Defaults
     authKey = "wslink-secret"
     dicom3d = Dicom3D()
-    # preset3d = Preset3D()
     view = None
     dicomDataPath = None
 

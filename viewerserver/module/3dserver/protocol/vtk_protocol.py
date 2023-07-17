@@ -62,11 +62,11 @@ class Dicom3D(vtk_protocols.vtkWebProtocol):
         self.volProperty.SetColor(self.color)
     
     def setDefaultPreset(self) -> None:
-        # Muscle Preset
+        # Bone Preset
         self.colorMappingWithStandardCT()
 
         self.scalarOpacity.RemoveAllPoints()
-        scalarOpacityRange = MUSCLE_CT.get("transferFunction").get("scalarOpacityRange")
+        scalarOpacityRange = BONE_CT.get("transferFunction").get("scalarOpacityRange")
         self.scalarOpacity.AddPoint(scalarOpacityRange[0], 0)
         self.scalarOpacity.AddPoint(scalarOpacityRange[1], 1)
 
@@ -114,9 +114,9 @@ class Dicom3D(vtk_protocols.vtkWebProtocol):
         # Color Mapping
         self.colorMappingWithStandardCT()
 
-        # Muscle CT: Opacity Mapping
+        # Bone CT: Opacity Mapping
         self.scalarOpacity.RemoveAllPoints()
-        scalarOpacityRange = MUSCLE_CT.get("transferFunction").get("scalarOpacityRange")
+        scalarOpacityRange = BONE_CT.get("transferFunction").get("scalarOpacityRange")
         self.scalarOpacity.AddPoint(scalarOpacityRange[0], 0)
         self.scalarOpacity.AddPoint(scalarOpacityRange[1], 1)
 
@@ -310,10 +310,14 @@ class Dicom3D(vtk_protocols.vtkWebProtocol):
         renderWindow = self.getView('-1')
         renderer = renderWindow.GetRenderers().GetFirstRenderer()
 
+        # Set origin mask volume
+        self.modifierLabelmap.GetPointData().GetScalars().Fill(0)
         # Set origin 3D object
         self.mapper.SetInputData(self.imageData)
 
+        # Set origin box status
         self.resetBox()
+        # Set default bone preset
         self.setDefaultPreset()
 
         # Remove actors
