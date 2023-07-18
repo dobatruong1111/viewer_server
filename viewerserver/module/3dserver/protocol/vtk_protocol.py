@@ -46,6 +46,10 @@ class Dicom3D(vtk_protocols.vtkWebProtocol):
         self.cellPicker = vtk.vtkCellPicker()
         self.afterInteractorStyle = AfterInteractorStyle()
 
+        # Camera
+        self.oriPositionOfCamera = None
+        self.viewUp = None
+
     @property
     def dicomDataPath(self):
         return self._dicomDataPath
@@ -150,6 +154,8 @@ class Dicom3D(vtk_protocols.vtkWebProtocol):
 
         # Render Window
         renderWindow.Render()
+        self.oriPositionOfCamera = renderer.GetActiveCamera().GetPosition()
+        self.viewUp = renderer.GetActiveCamera().GetViewUp()
 
         # Render Window Interactor
         renderWindowInteractor.SetPicker(self.cellPicker)
@@ -323,6 +329,10 @@ class Dicom3D(vtk_protocols.vtkWebProtocol):
         # Remove actors
         renderer.RemoveAllViewProps()
         renderer.AddVolume(self.volume)
+
+        # Set original position of the camera
+        renderer.GetActiveCamera().SetPosition(self.oriPositionOfCamera)
+        renderer.GetActiveCamera().SetViewUp(self.viewUp)
         renderer.ResetCamera()
 
         renderWindow.Render()
