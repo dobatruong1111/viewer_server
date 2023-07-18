@@ -213,6 +213,7 @@ class _Server(vtk_wslink.ServerProtocol):
         
         # Custom API
         self.registerVtkWebProtocol(self.dicom3d)
+        # self.registerVtkWebProtocol(self.preset3d)
 
         # tell the C++ web app to use no encoding.
         # ParaViewWebPublishImageDelivery must be set to decode=False to match.

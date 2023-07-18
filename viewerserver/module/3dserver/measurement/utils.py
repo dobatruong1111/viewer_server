@@ -225,3 +225,47 @@ def buildArcAngleMeasurement(arc: vtk.vtkArcSource, textActor: vtk.vtkTextActor,
         textActorPositionDisplay = convertFromWorldCoords2DisplayCoords(textActorPositionWorld, renderer)
         textActor.SetInput(f"{round(angle, 1)}deg")
         textActor.SetPosition(round(textActorPositionDisplay[0]), round(textActorPositionDisplay[1]))
+
+"""
+Description:
+    Class extends vtkInteractorStyleTrackballCamera class.
+    Class used to rotate, pan,... before angle measurement.
+"""
+class AfterInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
+    def __init__(self) -> None:
+        self._angle_measurement_pipelines = []
+        self._length_measurement_pipelines = []
+        self.AddObserver(vtk.vtkCommand.MouseMoveEvent, self.__mouseMoveEvent)
+
+    def getAngleMeasurementPipelines(self):
+        return self._angle_measurement_pipelines
+
+    def addAngleMeasurementPipeline(self, pipeline):
+        self._angle_measurement_pipelines.append(pipeline)
+
+    def getLengthMeasurementPipelines(self):
+        return self._length_measurement_pipelines
+
+    def addLengthMeasurementPipeline(self, pipeline):
+        self._length_measurement_pipelines.append(pipeline)
+
+    """
+        Description:
+            A handle function used to update the position of text actor when having mouse move event.
+    """
+    def __mouseMoveEvent(self, obj: vtk.vtkInteractorStyleTrackballCamera, event: str) -> None:
+        renderer = self.GetInteractor().GetRenderWindow().GetRenderers().GetFirstRenderer()
+        if len(self._angle_measurement_pipelines):
+            for pipeline in self._angle_measurement_pipelines:
+                points = pipeline.line.GetPoints()
+                # Update the position of text actor
+                buildArcAngleMeasurement(pipeline.arc, pipeline.textActor, renderer, points)
+            self.GetInteractor().Render()
+        
+        if len(self._length_measurement_pipelines):
+            for pipeline in self._length_measurement_pipelines:
+                points = pipeline.line.GetPoints()
+                # Method used to update the position of text actor
+                buildTextActorLengthMeasurement(pipeline.textActor, renderer, points)
+            self.GetInteractor().Render()
+        self.OnMouseMove()
