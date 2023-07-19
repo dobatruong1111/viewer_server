@@ -346,9 +346,10 @@ class Dicom3D(vtk_protocols.vtkWebProtocol):
 
         renderWindow.Render()
 
+        self.checkPanning = False
         style = vtk.vtkInteractorStyleTrackballCamera()
         renderWindowInteractor.SetInteractorStyle(style)
-
+        
         self.getApplication().InvalidateCache(renderWindow)
         self.getApplication().InvokeEvent(vtkCommand.UpdateEvent)
         return -1
