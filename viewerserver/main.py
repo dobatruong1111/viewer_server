@@ -61,6 +61,6 @@ async def schedule_periodic():
 def main():
     return {"status": "ok"}
 
-def start():
+if __name__ == "__main__":
     """Launched with `poetry run start` at root level"""
     uvicorn.run("viewerserver.main:app", host="0.0.0.0", port=8000, reload=True)

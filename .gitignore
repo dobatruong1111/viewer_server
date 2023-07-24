@@ -31,6 +31,7 @@ viewerserver/module/3dserver/launcher/
 viewerserver/module/3dserver/data/
 viewerserver/module/3dserver/proxy/*.txt
 viewerserver/module/3dserver/test/
+data/
 
 # PyInstaller
 #  Usually these files are written by a python script from a template

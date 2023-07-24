@@ -4,4 +4,4 @@
 export $(cat .env | xargs);
 
 # Start 2D Server
-poetry run start;
+poetry run python -m viewerserver.main;

@@ -95,7 +95,7 @@ class _Server(vtk_wslink.ServerProtocol):
         statusFilePath: str,
         threadCount: int = 4
     ) -> None:
-        WADO_URL = "http://192.168.1.32:8042/wado-rs"
+        WADO_URL = "http://27.72.147.196:37000/orthanc/wado-rs"
         WADO_USER = "orthanc"
         WADO_PASSWORD = "orthanc"
         url = f"{WADO_URL}/studies/{studyUID}/series/{seriesUID}/metadata"
@@ -148,7 +148,7 @@ class _Server(vtk_wslink.ServerProtocol):
         seriesUID: str, 
         dicomDataPath: str
     ) -> None:
-        WADO_URL = "http://192.168.1.32:8042/wado"
+        WADO_URL = "http://27.72.147.196:37000/orthanc/wado"
         WADO_USER = "orthanc"
         WADO_PASSWORD = "orthanc"
         try:
