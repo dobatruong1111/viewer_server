@@ -14,6 +14,8 @@ from measurement.angle_measurement import AngleMeasurementPipeline, AngleMeasure
 from cropping.crop_freehand import Contour2DPipeline, CropFreehandInteractorStyle, Operation
 from cropping.utils import IPWCallback
 
+from panning.panning_3dobject import PanningInteractorStyle
+
 # -------------------------------------------------------------------------
 # ViewManager
 # -------------------------------------------------------------------------
@@ -47,8 +49,12 @@ class Dicom3D(vtk_protocols.vtkWebProtocol):
         self.afterInteractorStyle = AfterInteractorStyle()
 
         # Camera
+        self.focalPoint = None
         self.oriPositionOfCamera = None
         self.viewUp = None
+
+        # Panning
+        self.checkPanning = False
 
     @property
     def dicomDataPath(self):
@@ -154,6 +160,7 @@ class Dicom3D(vtk_protocols.vtkWebProtocol):
 
         # Render Window
         renderWindow.Render()
+        self.focalPoint = renderer.GetActiveCamera().GetFocalPoint()
         self.oriPositionOfCamera = renderer.GetActiveCamera().GetPosition()
         self.viewUp = renderer.GetActiveCamera().GetViewUp()
 
@@ -313,6 +320,7 @@ class Dicom3D(vtk_protocols.vtkWebProtocol):
 
     @exportRpc("vtk.camera.reset")
     def resetCamera(self):
+        renderWindowInteractor = self.getApplication().GetObjectIdMap().GetActiveObject("INTERACTOR")
         renderWindow = self.getView('-1')
         renderer = renderWindow.GetRenderers().GetFirstRenderer()
 
@@ -330,13 +338,32 @@ class Dicom3D(vtk_protocols.vtkWebProtocol):
         renderer.RemoveAllViewProps()
         renderer.AddVolume(self.volume)
 
-        # Set original position of the camera
+        # Set original the camera status
+        renderer.GetActiveCamera().SetFocalPoint(self.focalPoint)
         renderer.GetActiveCamera().SetPosition(self.oriPositionOfCamera)
         renderer.GetActiveCamera().SetViewUp(self.viewUp)
         renderer.ResetCamera()
 
         renderWindow.Render()
-        self.getApplication().InvalidateCache(renderWindow)
 
+        self.checkPanning = False
+        style = vtk.vtkInteractorStyleTrackballCamera()
+        renderWindowInteractor.SetInteractorStyle(style)
+        
+        self.getApplication().InvalidateCache(renderWindow)
         self.getApplication().InvokeEvent(vtkCommand.UpdateEvent)
         return -1
+    
+    @exportRpc("vtk.dicom3d.panning")
+    def panning(self):
+        renderWindowInteractor = self.getApplication().GetObjectIdMap().GetActiveObject("INTERACTOR")
+
+        if not self.checkPanning:
+            self.checkPanning = True
+            style = PanningInteractorStyle()
+        else:
+            self.checkPanning = False
+            style = vtk.vtkInteractorStyleTrackballCamera()
+        renderWindowInteractor.SetInteractorStyle(style)
+
+        self.getApplication().InvokeEvent(vtkCommand.UpdateEvent)
