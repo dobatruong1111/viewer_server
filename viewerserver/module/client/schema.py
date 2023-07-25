@@ -22,3 +22,13 @@ class ViewerShareDTOCreate(BaseSchema):
     type: Optional[str] = None
 
     anonymize : Optional[bool] = None
+
+
+class Viewer3DRequestGetWebSocketLink(BaseSchema):
+    application: str = "viewer"
+
+    useUrl: bool
+
+    studyUUID: str
+
+    seriesUUID: str
