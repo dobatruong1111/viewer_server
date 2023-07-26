@@ -39,10 +39,10 @@ async def get_link(
 async def get_ws_link_3d(
     payload: Viewer3DRequestGetWebSocketLink
 ) -> dict:
-    apache_url = "http://localhost:8081/viewer"
+    launcher_url = "http://localhost:8081/viewer"
     try:
         response = requests.post(
-            apache_url,
+            launcher_url,
             json = payload.dict()
         )
         return response.json()
