@@ -4,4 +4,4 @@
 export $(cat .env | xargs);
 
 # Start 2D Server
-poetry run python -m viewerserver.main;
+poetry run uvicorn viewerserver.main:app --workers 4;
