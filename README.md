@@ -11,7 +11,9 @@ sh scripts/install.sh
 ```
 
 ## Development
+
 Debian, Ubuntu you may need to run below command if install failed
+
 ```shell
 export PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring
 ```
@@ -27,10 +29,4 @@ To manually compile the viewer client and run for development on the viewer clie
 ```shell
 sh scripts/build-client.sh
 sh scripts/dev.sh
-```
-
-## Run 3D Server
-
-```
-cd viewerserver/module/3dserver/
 ```
