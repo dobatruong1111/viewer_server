@@ -1,7 +1,11 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
+
 import requests
+import os
+from dotenv import load_dotenv
+load_dotenv(verbose=True)
 
 from ...db.db import get_db
 
@@ -39,7 +43,9 @@ async def get_link(
 async def get_ws_link_3d(
     payload: Viewer3DRequestGetWebSocketLink
 ) -> dict:
-    launcher_url = "http://localhost:8081/viewer"
+    host = os.getenv('HOST')
+    port = os.getenv('PORT_APACHE')
+    launcher_url = f"http://{host}:{port}/viewer"
     try:
         response = requests.post(
             launcher_url,

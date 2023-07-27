@@ -15,6 +15,10 @@ from .db.model.base_model import Base
 
 import asyncio
 
+import os
+from dotenv import load_dotenv
+load_dotenv(verbose=True)
+
 os.environ["TZ"] = settings.TIMEZONE
 # time.tzset()
 
@@ -61,6 +65,7 @@ async def schedule_periodic():
 def main():
     return {"status": "ok"}
 
-if __name__ == "__main__":
-    """Launched with `poetry run start` at root level"""
-    uvicorn.run("viewerserver.main:app", host="0.0.0.0", port=8000, reload=True)
+# if __name__ == "__main__":
+#     """Launched with `poetry run start` at root level"""
+#     port_2dserver = os.getenv('PORT_2DSERVER', 8000)
+#     uvicorn.run("viewerserver.main:app", host='0.0.0.0', port=port_2dserver, reload=True)

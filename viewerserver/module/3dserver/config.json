@@ -5,7 +5,7 @@
         "endpoint": "viewer",
         "log_dir": "./viewerserver/module/3dserver/launcher",
         "proxy_file": "./viewerserver/module/3dserver/proxy/proxy-mapping.txt",
-        "sessionURL": "ws://192.168.1.190:8081/proxy?sessionId=${id}&path=ws",
+        "sessionURL": "ws://192.168.1.190:808/proxy?sessionId=${id}&path=ws",
         "timeout": 25,
         "sanitize": {},
         "fields": []
@@ -13,14 +13,17 @@
     "resources": [
         {
             "host": "192.168.1.190",
-            "port_range": [9001, 9500]
+            "port_range": [
+                9001,
+                9500
+            ]
         }
     ],
     "properties": {},
     "apps": {
         "viewer": {
             "cmd": [
-                "poetry", 
+                "poetry",
                 "run",
                 "python",
                 "./viewerserver/module/3dserver/vtk_server.py",
