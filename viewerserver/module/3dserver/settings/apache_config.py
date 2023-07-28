@@ -24,8 +24,8 @@ if __name__ == "__main__":
     )
     args = parse.parse_args()
     config_key = "ProxyPass"
-    host = os.getenv('HOST')[:-1]
-    port_launcher = os.getenv('PORT_LAUNCHER')[:-1]
+    host = os.getenv('HOST') if os.getenv('HOST')[-1] != '\r' else os.getenv('HOST')[:-1]
+    port_launcher = os.getenv('PORT_LAUNCHER') if os.getenv('PORT_LAUNCHER')[-1] != '\r' else os.getenv('PORT_LAUNCHER')[:-1]
     new_value = f"http://{host}:{port_launcher}/viewer/"
     if not args.config is None:
         modified_apache_config(args.config, config_key, new_value)

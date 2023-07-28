@@ -28,8 +28,8 @@ if __name__ == "__main__":
         help="launcher config file"
     )
     args = parser.parse_args()
-    host = os.getenv('HOST')[:-1]
-    port_launcher = os.getenv('PORT_LAUNCHER')[:-1]
-    port_apache = os.getenv('PORT_APACHE')[:-1]
+    host = os.getenv('HOST') if os.getenv('HOST')[-1] != '\r' else os.getenv('HOST')[:-1]
+    port_launcher = os.getenv('PORT_LAUNCHER') if os.getenv('PORT_LAUNCHER')[-1] != '\r' else os.getenv('PORT_LAUNCHER')[:-1]
+    port_apache = os.getenv('PORT_APACHE') if os.getenv('PORT_APACHE')[-1] != '\r' else os.getenv('PORT_APACHE')[:-1]
     if not args.config is None:
         modified_launcher_config(args.config, host, port_launcher, port_apache)
