@@ -51,6 +51,8 @@ import threading
 import json
 import enum
 
+from utils.utils import MyAuth
+
 # =============================================================================
 # Server class
 # =============================================================================
@@ -86,23 +88,50 @@ class _Server(vtk_wslink.ServerProtocol):
             default=None,
             help="seriesUUID"
         )
+        parser.add_argument(
+            "--session2D",
+            type=str,
+            default=None,
+            help="session2D"
+        )
+
+    @staticmethod
+    def get_store_url(
+        session2D: str, 
+        studyUUID: str
+    ) -> Dict:
+        store = {
+            "store_url": "http://192.168.1.32:8042/wado-rs",
+            "store_authentication": "Basic b3J0aGFuYzpvcnRoYW5j"
+        }
+        try:
+            url = f"http://localhost:8000/v1/ws/rest/session/{session2D}-{studyUUID}"
+            response = requests.get(
+                url
+            )
+            res = response.json()
+            store["store_url"] = res["store_url"]
+            store["store_authentication"] = res["store_authentication"]
+        except Exception as e:
+            print(f"Error: {e}")
+        finally:
+            return store
         
     @staticmethod
     def save_all_instances(
+        store: Dict,
         studyUID: str,
         seriesUID: str,
         dicomDataPath: str,
         statusFilePath: str,
         threadCount: int = 4
     ) -> None:
-        WADO_URL = "http://27.72.147.196:37000/orthanc/wado-rs"
-        WADO_USER = "orthanc"
-        WADO_PASSWORD = "orthanc"
-        url = f"{WADO_URL}/studies/{studyUID}/series/{seriesUID}/metadata"
+        store_url = store['store_url']
+        url = f"{store_url}/studies/{studyUID}/series/{seriesUID}/metadata"
         try:
             response = requests.get(
                 url,
-                auth = (WADO_USER, WADO_PASSWORD)
+                auth = MyAuth(store["store_authentication"])
             )
             if response.status_code == 200:
                 if _Server.get_data_status(statusFilePath) == Status.NONE.value:
@@ -122,6 +151,7 @@ class _Server(vtk_wslink.ServerProtocol):
                                     f"thread {i}",
                                     (startIndex, endIndex),
                                     metadatas,
+                                    store,
                                     studyUID,
                                     seriesUID,
                                     dicomDataPath
@@ -144,19 +174,18 @@ class _Server(vtk_wslink.ServerProtocol):
         name: str,
         indexs: Tuple, 
         metadatas: Dict, 
+        store: Dict,
         studyUID: str, 
         seriesUID: str, 
         dicomDataPath: str
     ) -> None:
-        WADO_URL = "http://27.72.147.196:37000/orthanc/wado"
-        WADO_USER = "orthanc"
-        WADO_PASSWORD = "orthanc"
+        store_url = store["store_url"].split("-")[0]
         try:
             for i in range(indexs[0], indexs[1]):
                 ds = Dataset.from_json(metadatas[i])
                 objectUID = ds.SOPInstanceUID
                 response = requests.get(
-                    WADO_URL,
+                    store_url,
                     params={
                         "studyUID": studyUID,
                         "seriesUID": seriesUID,
@@ -164,7 +193,7 @@ class _Server(vtk_wslink.ServerProtocol):
                         "requestType": "WADO",
                         "contentType": "application/dicom"
                     },
-                    auth = (WADO_USER, WADO_PASSWORD)
+                    auth = MyAuth(store["store_authentication"])
                 )
                 if response.status_code == 200:
                     dicomFile = f"/{objectUID}.dcm"
@@ -173,7 +202,6 @@ class _Server(vtk_wslink.ServerProtocol):
                         file.write(bytes)
                 else:
                     print(f"{response.url}\nStatus Code: {response.status_code}")
-                    return
             print(f"{name}: Done")
         except Exception as e:
             print(f"Error: {e}")
@@ -257,6 +285,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
     _Server.configure(args)
 
+    store = _Server.get_store_url(args.session2D, args.studyUUID)
+
     dataPath = f"./viewerserver/module/3dserver/data/{args.studyUUID}/{args.seriesUUID}"
     dicomDataPath = dataPath + "/data"
     statusFilePath = dataPath + "/status.json"
@@ -268,7 +298,7 @@ if __name__ == "__main__":
 
     thread_download_data = threading.Thread(
         target=_Server.save_all_instances,
-        args=(args.studyUUID, args.seriesUUID, dicomDataPath, statusFilePath,)
+        args=(store, args.studyUUID, args.seriesUUID, dicomDataPath, statusFilePath,)
     )
     thread_download_data.start()
 

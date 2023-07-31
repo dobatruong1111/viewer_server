@@ -36,7 +36,9 @@
                 "--studyUUID",
                 "${studyUUID}",
                 "--seriesUUID",
-                "${seriesUUID}"
+                "${seriesUUID}",
+                "--session2D",
+                "${session2D}"
             ],
             "ready_line": "Starting factory"
         }
