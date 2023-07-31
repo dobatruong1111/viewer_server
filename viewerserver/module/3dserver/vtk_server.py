@@ -52,6 +52,8 @@ import json
 import enum
 
 from utils.utils import MyAuth
+from dotenv import load_dotenv
+load_dotenv(verbose=True)
 
 # =============================================================================
 # Server class
@@ -105,7 +107,9 @@ class _Server(vtk_wslink.ServerProtocol):
             "store_authentication": "Basic b3J0aGFuYzpvcnRoYW5j"
         }
         try:
-            url = f"http://localhost:8000/v1/ws/rest/session/{session2D}-{studyUUID}"
+            host = os.getenv('HOST') if os.getenv('HOST')[-1] != '\r' else os.getenv('HOST')[:-1]
+            port = os.getenv('PORT_2DSERVER') if os.getenv('PORT_2DSERVER')[-1] != '\r' else os.getenv('PORT_2DSERVER')[:-1]
+            url = f"http://{host}:{port}/v1/ws/rest/session/{session2D}-{studyUUID}"
             response = requests.get(
                 url
             )

@@ -43,8 +43,8 @@ async def get_link(
 async def get_ws_link_3d(
     payload: Viewer3DRequestGetWebSocketLink
 ) -> dict:
-    host = os.getenv('HOST')
-    port = os.getenv('PORT_APACHE')
+    host = os.getenv('HOST') if os.getenv('HOST')[-1] != '\r' else os.getenv('HOST')[:-1]
+    port = os.getenv('PORT_APACHE') if os.getenv('PORT_APACHE')[-1] != '\r' else os.getenv('PORT_APACHE')[:-1]
     launcher_url = f"http://{host}:{port}/viewer"
     try:
         response = requests.post(
