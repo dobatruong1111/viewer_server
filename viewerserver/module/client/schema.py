@@ -32,3 +32,5 @@ class Viewer3DRequestGetWebSocketLink(BaseSchema):
     studyUUID: str
 
     seriesUUID: str
+
+    session2D: str
