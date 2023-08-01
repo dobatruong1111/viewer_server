@@ -360,10 +360,10 @@ class Dicom3D(vtk_protocols.vtkWebProtocol):
 
         if not self.checkPanning:
             self.checkPanning = True
-            style = PanningInteractorStyle()
+            style = PanningInteractorStyle(self.afterInteractorStyle)
         else:
             self.checkPanning = False
-            style = vtk.vtkInteractorStyleTrackballCamera()
+            style = self.afterInteractorStyle
         renderWindowInteractor.SetInteractorStyle(style)
 
         self.getApplication().InvokeEvent(vtkCommand.UpdateEvent)
