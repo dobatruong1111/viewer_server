@@ -36,8 +36,8 @@ async def get_link(
 @router.get("/session/{session}/", status_code=status.HTTP_201_CREATED)
 async def get_link(
     session: str, db: AsyncSession = Depends(get_db)
-) -> list[OutSessionSchema]:
-    return await SessionsRepository(db).get_all_by_session(session)
+) -> OutSessionSchema:
+    return await SessionsRepository(db).get_by_id(session)
 
 @router.post("/client/session3d/viewer")
 async def get_ws_link_3d(
