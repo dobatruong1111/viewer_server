@@ -40,7 +40,7 @@ class GlobalConfig(BaseSettings):
             else self.DATABASE_URL
         )
     
-    WADO_URL = "http://192.168.1.32:8042/wado-rs"
+    WADO_URL = "http://27.72.147.196:37000/orthanc/wado-rs"
     WADO_USER = "orthanc"
     WADO_PASSWORD = "orthanc"
 
