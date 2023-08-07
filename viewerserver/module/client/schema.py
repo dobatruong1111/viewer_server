@@ -9,15 +9,15 @@ class StoreRequestDTOCreate(BaseSchema):
 
 
 class ViewerRequestDTOCreate(BaseSchema):
-    user_id : Optional[str]
+    userId : Optional[str]
 
-    expire_in : int
+    expireIn : int
 
-    study_uids : Dict[str, StoreRequestDTOCreate]
+    studyUIDs : Dict[str, StoreRequestDTOCreate]
 
 
 class ViewerShareDTOCreate(BaseSchema):
-    expire_in : Optional[int]
+    expiredIn : Optional[int]
 
     type: Optional[str] = None
 
