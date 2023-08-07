@@ -59,7 +59,7 @@ class Dicom3D(vtk_protocols.vtkWebProtocol):
         self.checkPanning = False
 
         # Crop Freehand
-        self.contour2DPipeline = None
+        self.contour2Dpipeline = None
         self.cropFreehandInteractorStyle = None
 
     @property
