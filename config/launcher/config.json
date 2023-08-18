@@ -1,0 +1,44 @@
+{
+    "configuration": {
+        "host": "0.0.0.0",
+        "port": 9000,
+        "endpoint": "viewer",
+        "log_dir": "./launcher",
+        "proxy_file": "./proxy-mapping.txt",
+        "sessionURL": "ws://27.72.147.196:3816/proxy?sessionId=${id}&path=ws",
+        "timeout": 25,
+        "sanitize": {},
+        "fields": []
+    },
+    "resources": [
+        {
+            "host": "0.0.0.0",
+            "port_range": [
+                9001,
+                9500
+            ]
+        }
+    ],
+    "properties": {},
+    "apps": {
+        "viewer": {
+            "cmd": [
+                "python",
+                "./viewerserver/module/3dserver/vtk_server.py",
+                "--host",
+                "${host}",
+                "--port",
+                "${port}",
+                "--authKey",
+                "${secret}",
+                "--studyUUID",
+                "${studyUUID}",
+                "--seriesUUID",
+                "${seriesUUID}",
+                "--session2D",
+                "${session2D}"
+            ],
+            "ready_line": "Starting factory"
+        }
+    }
+}
