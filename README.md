@@ -2,6 +2,10 @@
 
 A viewer server is a radiological viewer developed for clinical professionals.
 
+## Setup Docker
+
+[Install Docker](https://docs.docker.com/engine/install/)
+
 ## Setup Native
 
 1. Clone project và sửa trường HOST thành địa chỉ IP máy trong tệp .env
@@ -39,9 +43,7 @@ sh scripts/dev.sh
 
 ## Build Docker
 
-1. [Setup Docker](https://docs.docker.com/engine/install/)
-
-2. Clone project và sửa trường HOST trong tệp .env
+1. Clone project và sửa trường HOST trong tệp .env
 
 ```
 HOST=0.0.0.0
@@ -51,7 +53,7 @@ PORT_LAUNCHER=9000
 WORKERS=4
 ```
 
-3. Xóa thư mục saola-dicom-viewer và lấy bản React client mới về
+2. Xóa thư mục saola-dicom-viewer và lấy bản React client mới về
 
 ```
 rmdir saola-dicom-viewer
@@ -61,25 +63,25 @@ git submodule add --force https://gitlab+deploy-token-2165626:Y1z-u-HyBRPNCWczTK
 git submodule update --recursive --remote
 ```
 
-4. Build Docker
+3. Build Docker
 
 ```
 docker build -t viewer-server -f Dockerfile .
 ```
 
-5. Run Container
+4. Run Container
 
 ```
 docker run --rm --name viewerserver -p 8081:8081 -p 8000:8000 -p 9000:9000 --gpus all -it viewer-server
 ```
 
-6. Start viewer server (chạy lại nếu có lỗi)
+5. Start viewer server (chạy lại nếu có lỗi)
 
 ```
 sh entrypoint.sh
 ```
 
-7. Thoát docker bash
+6. Thoát docker bash
 
 ```
 exit
