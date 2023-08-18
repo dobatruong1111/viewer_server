@@ -21,32 +21,32 @@ class RequestService:
     async def get_new_viewer_url(self, obj: ViewerRequestDTOCreate) -> str:
         session_id = str(uuid4())
     
-        for study_iuid in obj.study_uids:
-            store = obj.study_uids[study_iuid]
+        for study_iuid in obj.studyUIDs:
+            store = obj.studyUIDs[study_iuid]
             json = {
                 "id": session_id + "-" + study_iuid,
-                "user_id": obj.user_id,
+                "user_id": obj.userId,
                 "owner_session": "",
-                "owner_user_id": obj.user_id,
+                "owner_user_id": obj.userId,
                 "session": session_id,
                 "store_authentication": store.authentication,
                 "store_url": store.url,
                 "study_iuid": study_iuid,
-                "expired_time": datetime.today() + timedelta(seconds=obj.expire_in * 60)
+                "expired_time": datetime.today() + timedelta(seconds=obj.expireIn)
             }
             session = InSessionSchema(**json)
 
             print(await self._repository.create(session))
 
-        url = "/viewer/index.html?session=" + session_id + "&studies=" + ",".join(obj.study_uids)
-        return url if obj.user_id is None else url + "&userID=" + obj.user_id
+        url = "/viewer/index.html?session=" + session_id + "&studies=" + ",".join(obj.studyUIDs)
+        return url if obj.userId is None else url + "&userID=" + obj.userId
 
     async def get_shared_viewer_url(self, sessionID: str, obj: ViewerShareDTOCreate) -> str:
         sessions =  await self._repository.get_all_by_session(sessionID)
 
         expireIn = self.MAX_SHARE_TIME
-        if obj.expire_in is not None and obj.expire_in > 0:
-            expireIn = min(expireIn, obj.expire_in)
+        if obj.expiredIn is not None and obj.expiredIn > 0:
+            expireIn = min(expireIn, obj.expiredIn)
 
         sharedSessionID = str(uuid4())
 

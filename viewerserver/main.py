@@ -13,6 +13,8 @@ from .config.settings import settings
 from .config.session import engine
 from .db.model.base_model import Base
 
+from .module.sessions.scheduler import remove_expired_sessions
+
 import asyncio
 
 import os
@@ -57,8 +59,9 @@ async def schedule_periodic():
         await conn.run_sync(Base.metadata.create_all)
 
     # Run loop event periodically
-    # loop = asyncio.get_event_loop()
+    loop = asyncio.get_event_loop()
     # loop.create_task(periodic())
+    loop.create_task(remove_expired_sessions())
 
 
 @app.get("/")
