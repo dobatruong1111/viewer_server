@@ -22,6 +22,7 @@ from panning.panning_3dobject import PanningInteractorStyle
 
 class Dicom3D(vtk_protocols.vtkWebProtocol):
     def __init__(self):
+        # Data
         self._dicomDataPath = None
     
         # Pipeline
@@ -31,6 +32,7 @@ class Dicom3D(vtk_protocols.vtkWebProtocol):
         self.mapper = vtk.vtkSmartVolumeMapper()
         self.volProperty = vtk.vtkVolumeProperty()
         self.volume = vtk.vtkVolume()
+        
         # Transfer Function
         self.color = vtk.vtkColorTransferFunction()
         self.scalarOpacity = vtk.vtkPiecewiseFunction()
@@ -55,6 +57,10 @@ class Dicom3D(vtk_protocols.vtkWebProtocol):
 
         # Panning
         self.checkPanning = False
+
+        # Crop Freehand
+        self.contour2Dpipeline = None
+        self.cropFreehandInteractorStyle = None
 
     @property
     def dicomDataPath(self):
@@ -150,9 +156,21 @@ class Dicom3D(vtk_protocols.vtkWebProtocol):
         self.widget.AddObserver(vtk.vtkCommand.InteractionEvent, ipwcallback)
         self.widget.Off()
 
-        # Cropping Freehand
+        # Measurement
         self.cellPicker.AddPickList(self.volume)
         self.cellPicker.PickFromListOn()
+
+        # Cropping Freehand
+        self.contour2Dpipeline = Contour2DPipeline()
+        self.cropFreehandInteractorStyle = CropFreehandInteractorStyle(
+            contour2Dpipeline=self.contour2Dpipeline,
+            imageData=self.imageData,
+            modifierLabelmap=self.modifierLabelmap,
+            operation=Operation.INSIDE,
+            fillValue=-1000,
+            mapper=self.mapper,
+            afterInteractorStyle=self.afterInteractorStyle
+        )
 
         # Render
         renderer.AddVolume(self.volume)
@@ -160,6 +178,8 @@ class Dicom3D(vtk_protocols.vtkWebProtocol):
 
         # Render Window
         renderWindow.Render()
+
+        # Get original properties of camera
         self.focalPoint = renderer.GetActiveCamera().GetFocalPoint()
         self.oriPositionOfCamera = renderer.GetActiveCamera().GetPosition()
         self.viewUp = renderer.GetActiveCamera().GetViewUp()
@@ -296,26 +316,18 @@ class Dicom3D(vtk_protocols.vtkWebProtocol):
         self.getApplication().InvokeEvent(vtkCommand.UpdateEvent)
 
     @exportRpc("vtk.dicom3d.crop.freehand")
-    def crop_freehand_handle(self):
+    def crop_freehand_handle(self, operation: Operation = Operation.INSIDE, fillValue: int = -1000):
         renderWindowInteractor = self.getApplication().GetObjectIdMap().GetActiveObject("INTERACTOR")
         renderWindow = self.getView('-1')
         renderer = renderWindow.GetRenderers().GetFirstRenderer()
 
-        contour2DPipeline = Contour2DPipeline()
-        renderer.AddActor(contour2DPipeline.actor)
-        renderer.AddActor(contour2DPipeline.actorThin)
+        renderer.AddActor(self.contour2Dpipeline.actor)
+        renderer.AddActor(self.contour2Dpipeline.actorThin)
 
-        cropFreehandInteractorStyle = CropFreehandInteractorStyle(
-            contour2DPipeline,
-            self.imageData,
-            self.modifierLabelmap,
-            Operation.INSIDE,
-            -1000,
-            self.mapper,
-            self.afterInteractorStyle
-        )
-        renderWindowInteractor.SetInteractorStyle(cropFreehandInteractorStyle)
-        
+        self.cropFreehandInteractorStyle.setOperation(operation)
+        self.cropFreehandInteractorStyle.setFillValue(fillValue)
+
+        renderWindowInteractor.SetInteractorStyle(self.cropFreehandInteractorStyle)
         self.getApplication().InvokeEvent(vtkCommand.UpdateEvent)
 
     @exportRpc("vtk.camera.reset")
@@ -331,6 +343,7 @@ class Dicom3D(vtk_protocols.vtkWebProtocol):
 
         # Set origin box status
         self.resetBox()
+
         # Set default bone preset
         self.setDefaultPreset()
 
@@ -344,9 +357,13 @@ class Dicom3D(vtk_protocols.vtkWebProtocol):
         renderer.GetActiveCamera().SetViewUp(self.viewUp)
         renderer.ResetCamera()
 
+        # Render window
         renderWindow.Render()
 
+        # Turn off panning interactor
         self.checkPanning = False
+
+        # Set default interactor style
         style = vtk.vtkInteractorStyleTrackballCamera()
         renderWindowInteractor.SetInteractorStyle(style)
         
@@ -364,6 +381,10 @@ class Dicom3D(vtk_protocols.vtkWebProtocol):
         else:
             self.checkPanning = False
             style = self.afterInteractorStyle
+
         renderWindowInteractor.SetInteractorStyle(style)
 
         self.getApplication().InvokeEvent(vtkCommand.UpdateEvent)
+
+    def onClose(self, client_id) -> None:
+        print("close...!")

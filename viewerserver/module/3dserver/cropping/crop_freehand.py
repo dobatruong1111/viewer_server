@@ -65,6 +65,8 @@ class CropFreehandInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
         self.contour2Dpipeline = contour2Dpipeline
         # Origin image data
         self.imageData = imageData
+        self.nshape = tuple(reversed(imageData.GetDimensions())) # (z, y, x)
+        self.imageDataArray = vtk_to_numpy(imageData.GetPointData().GetScalars()).reshape(self.nshape)
         # Image data extends some properties from origin image data such as: 
         # extent, origin, spacing, direction and scalar type
         self.modifierLabelmap = modifierLabelmap
@@ -75,6 +77,12 @@ class CropFreehandInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
         self.fillValue = fillValue
         # Set when cropping finished
         self.afterInteractorStyle = afterInteractorStyle
+        # Clipping range
+        self.clippingRange = None
+        # Masked image data
+        self.maskedImageData = vtk.vtkImageData()
+        # Thresholding of modifierLabelmap
+        self.thresh = vtk.vtkImageThreshold()
     
         # Events
         self.AddObserver(vtkCommand.LeftButtonPressEvent, self.__leftButtonPressEvent)
@@ -99,6 +107,12 @@ class CropFreehandInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
         self.brushPolyDataToStencil .SetOutputOrigin(0, 0, 0)
         self.brushPolyDataToStencil.SetOutputSpacing(1, 1, 1)
         self.brushPolyDataToStencil.SetInputConnection(self.worldToModifierLabelmapIjkTransformer.GetOutputPort())
+
+    def setOperation(self, operation: Operation) -> None:
+        self.operation = operation
+
+    def setFillValue(self, fillValue: int) -> None:
+        self.fillValue = fillValue
 
     def __createGlyph(self, eventPosition: Tuple) -> None:
         if self.contour2Dpipeline.isDragging:
@@ -165,17 +179,21 @@ class CropFreehandInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
             
     def __leftButtonReleaseEvent(self, obj: vtk.vtkInteractorStyleTrackballCamera, event: str) -> None:
         if self.contour2Dpipeline.isDragging:
+            renderer = self.GetInteractor().GetRenderWindow().GetRenderers().GetFirstRenderer()
             eventPosition = self.GetInteractor().GetEventPosition()
             self.contour2Dpipeline.isDragging = False
+            
             self.__updateGlyphWithNewPosition(eventPosition, True)
             start = time.time()
             self.__paintApply()
             stop = time.time()
             print("-----")
             print("__paintApply():", stop - start)
-            self.OnLeftButtonUp()
 
-            # style = vtk.vtkInteractorStyleTrackballCamera()
+            renderer.RemoveActor(self.contour2Dpipeline.actor)
+            renderer.RemoveActor(self.contour2Dpipeline.actorThin)
+
+            self.OnLeftButtonUp()
             self.GetInteractor().SetInteractorStyle(self.afterInteractorStyle)
 
     '''
@@ -235,7 +253,8 @@ class CropFreehandInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
         segmentationToCameraTransform.Concatenate(segmentationToWorldMatrix)
         # print(segmentationToCameraTransform)
 
-        clipRange = utils.calcClipRange(self.modifierLabelmap, segmentationToCameraTransform, camera)
+        if self.clippingRange is None:
+            self.clippingRange = utils.calcClipRange(self.modifierLabelmap, segmentationToCameraTransform, camera)
         
         for pointIndex in range(numberOfPoints):
             # Convert the selection point into world coordinates
@@ -271,14 +290,14 @@ class CropFreehandInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
             tF = 0
             tB = 0
             if camera.GetParallelProjection():
-                tF = clipRange[0] - rayLength
-                tB = clipRange[1] - rayLength
+                tF = self.clippingRange[0] - rayLength
+                tB = self.clippingRange[1] - rayLength
                 for i in range(3):
                     p1World[i] = pickPosition[i] + tF * cameraDOP[i]
                     p2World[i] = pickPosition[i] + tB * cameraDOP[i]
             else:
-                tF = clipRange[0] / rayLength
-                tB = clipRange[1] / rayLength
+                tF = self.clippingRange[0] / rayLength
+                tB = self.clippingRange[1] / rayLength
                 for i in range(3):
                     p1World[i] = cameraPos[i] + tF * ray[i]
                     p2World[i] = cameraPos[i] + tB * ray[i]
@@ -391,33 +410,29 @@ class CropFreehandInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
     def __maskVolume(self) -> None:
         # Hard, Soft edge
         # Thresholding of modifierLabelmap
-        thresh = vtk.vtkImageThreshold()
+        # thresh = vtk.vtkImageThreshold()
         maskMin = 0
         maskMax = 1
-        thresh.SetOutputScalarTypeToUnsignedChar() # vtk.VTK_UNSIGNED_CHAR: 0-255
-        thresh.SetInputData(self.modifierLabelmap)
-        thresh.ThresholdByLower(0) # <= 0
-        thresh.SetInValue(maskMin)
-        thresh.SetOutValue(maskMax)
-        thresh.Update()
-        maskImage = thresh.GetOutput()
-
-        nshape = tuple(reversed(maskImage.GetDimensions())) # (z, y, x)
+        self.thresh.SetOutputScalarTypeToUnsignedChar() # vtk.VTK_UNSIGNED_CHAR: 0-255
+        self.thresh.SetInputData(self.modifierLabelmap)
+        self.thresh.ThresholdByLower(0) # <= 0
+        self.thresh.SetInValue(maskMin)
+        self.thresh.SetOutValue(maskMax)
+        self.thresh.Update()
+        maskImage = self.thresh.GetOutput()
 
         # Convert binary mask image and origin image data from vtkDataArray (supper class) to numpy
-        maskArray = vtk_to_numpy(maskImage.GetPointData().GetScalars()).reshape(nshape).astype(float)
-        inputArray = vtk_to_numpy(self.imageData.GetPointData().GetScalars()).reshape(nshape)
+        maskArray = vtk_to_numpy(maskImage.GetPointData().GetScalars()).reshape(self.nshape).astype(float)
 
-        resultArray = inputArray[:] * (1 - maskArray[:]) + float(self.fillValue) * maskArray[:] # -1000 HU: air
+        resultArray = self.imageDataArray[:] * (1 - maskArray[:]) + float(self.fillValue) * maskArray[:] # -1000 HU: air
 
-        result = numpy_to_vtk(resultArray.astype(inputArray.dtype).reshape(1, -1)[0])   
+        result = numpy_to_vtk(resultArray.astype(self.imageDataArray.dtype).reshape(1, -1)[0])
         
-        maskedImageData = vtk.vtkImageData()
-        maskedImageData.SetExtent(self.modifierLabelmap.GetExtent())
-        maskedImageData.SetOrigin(self.modifierLabelmap.GetOrigin())
-        maskedImageData.SetSpacing(self.modifierLabelmap.GetSpacing())
-        maskedImageData.SetDirectionMatrix(self.modifierLabelmap.GetDirectionMatrix())
-        maskedImageData.GetPointData().SetScalars(result)
+        self.maskedImageData.SetExtent(self.modifierLabelmap.GetExtent())
+        self.maskedImageData.SetOrigin(self.modifierLabelmap.GetOrigin())
+        self.maskedImageData.SetSpacing(self.modifierLabelmap.GetSpacing())
+        self.maskedImageData.SetDirectionMatrix(self.modifierLabelmap.GetDirectionMatrix())
+        self.maskedImageData.GetPointData().SetScalars(result)
         
         # Render the new volume
-        self.mapper.SetInputData(maskedImageData)
+        self.mapper.SetInputData(self.maskedImageData)
