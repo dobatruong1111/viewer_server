@@ -81,7 +81,22 @@ docker run --rm --name viewerserver -p 8081:8081 -p 8000:8000 -p 9000:9000 --gpu
 sh entrypoint.sh
 ```
 
-6. Thoát docker bash
+6. Gọi API lấy link
+
+```
+{
+    "userId":"123",
+    "expireIn":600,
+    "studyUIDs": {
+        "1.2.840.113619.2.417.3.2831163337.337.1669159714.820": {
+            "url": "http://27.72.147.196:37000/orthanc/wado-rs",
+            "authentication": "Basic b3J0aGFuYzpvcnRoYW5j"
+        }
+    }
+}
+```
+
+7. Thoát docker bash
 
 ```
 exit
