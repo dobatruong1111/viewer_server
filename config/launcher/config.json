@@ -36,7 +36,9 @@
                 "--seriesUUID",
                 "${seriesUUID}",
                 "--session2D",
-                "${session2D}"
+                "${session2D}",
+                "--timeout",
+                "20"
             ],
             "ready_line": "Starting factory"
         }
