@@ -63,7 +63,7 @@ ENV PIP_NO_CACHE_DIR=1
 RUN wget -q -O- https://bootstrap.pypa.io/get-pip.py | python3.11 && \
     pip install -U pip
 
-# Install setup dependencies
+# Install dependencies
 RUN pip install PyYAML \
     wheel \
     poetry \
@@ -81,16 +81,8 @@ ENV VIEWER_VENV=/deploy/server/venv
 ENV PV_VENV=${VIEWER_VENV}
 ENV VTK_VENV=${VIEWER_VENV}
 
-# Copy the launcher configuration file into placeclear
-# COPY config/launcher/config.json /opt/viewer_server/config.json
-
 # Copy the viewer project into place
-COPY / /opt/viewer_server
-
-# Copy script files into place
-# COPY scripts/* /opt/viewer_server/
-
-# RUN chmod +x /opt/viewer_server/scripts/entrypoint.sh
+COPY . /opt/viewer_server
 
 WORKDIR /opt/viewer_server
 
