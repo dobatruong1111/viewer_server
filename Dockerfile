@@ -73,6 +73,9 @@ RUN pip install PyYAML \
     requests \
     numpy
 
+# Update requests version
+RUN pip install --upgrade requests
+
 # Install vtk-egl
 RUN pip install https://github.com/pyvista/pyvista-wheels/raw/main/vtk_egl-9.2.5-cp311-cp311-linux_x86_64.whl
 
