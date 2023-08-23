@@ -270,8 +270,8 @@ class Dicom3D(vtk_protocols.vtkWebProtocol):
         renderer = renderWindow.GetRenderers().GetFirstRenderer()
 
         pipeline = LengthMeasurementPipeline()
-        renderer.AddActor(pipeline.firstSphereActor)
-        renderer.AddActor(pipeline.secondSphereActor)
+        # renderer.AddActor(pipeline.firstSphereActor)
+        # renderer.AddActor(pipeline.secondSphereActor)
         renderer.AddActor(pipeline.lineActor)
         renderer.AddActor(pipeline.textActor)
 
@@ -287,9 +287,9 @@ class Dicom3D(vtk_protocols.vtkWebProtocol):
         renderer = renderWindow.GetRenderers().GetFirstRenderer()
 
         pipeline = AngleMeasurementPipeline()
-        renderer.AddActor(pipeline.firstSphereActor)
-        renderer.AddActor(pipeline.secondSphereActor)
-        renderer.AddActor(pipeline.thirdSphereActor)
+        # renderer.AddActor(pipeline.firstSphereActor)
+        # renderer.AddActor(pipeline.secondSphereActor)
+        # renderer.AddActor(pipeline.thirdSphereActor)
         renderer.AddActor(pipeline.firstLineActor)
         renderer.AddActor(pipeline.secondLineActor)
         renderer.AddActor(pipeline.arcActor)

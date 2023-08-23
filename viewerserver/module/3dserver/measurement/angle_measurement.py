@@ -18,8 +18,8 @@ class AngleMeasurementPipeline():
         self.arc.SetResolution(30)
 
         # Sphere
-        self.sphere = vtk.vtkSphereSource()
-        self.sphere.SetRadius(5)
+        # self.sphere = vtk.vtkSphereSource()
+        # self.sphere.SetRadius(5)
 
         # Filter
         # vtkTubeFilter is a filter that generates a tube around each input line
@@ -43,14 +43,14 @@ class AngleMeasurementPipeline():
         self.arcMapper = vtk.vtkPolyDataMapper()
         self.arcMapper.SetInputConnection(self.arcTubeFilter.GetOutputPort())
 
-        self.firstSphereMapper = vtk.vtkPolyDataMapper()
-        self.firstSphereMapper.SetInputConnection(self.sphere.GetOutputPort())
+        # self.firstSphereMapper = vtk.vtkPolyDataMapper()
+        # self.firstSphereMapper.SetInputConnection(self.sphere.GetOutputPort())
 
-        self.secondSphereMapper = vtk.vtkPolyDataMapper()
-        self.secondSphereMapper.SetInputConnection(self.sphere.GetOutputPort())
+        # self.secondSphereMapper = vtk.vtkPolyDataMapper()
+        # self.secondSphereMapper.SetInputConnection(self.sphere.GetOutputPort())
 
-        self.thirdSphereMapper =  vtk.vtkPolyDataMapper()
-        self.thirdSphereMapper.SetInputConnection(self.sphere.GetOutputPort())
+        # self.thirdSphereMapper =  vtk.vtkPolyDataMapper()
+        # self.thirdSphereMapper.SetInputConnection(self.sphere.GetOutputPort())
 
         # Actors
         property = vtk.vtkProperty()
@@ -85,22 +85,22 @@ class AngleMeasurementPipeline():
         self.textActor.VisibilityOff()
 
         # Used to mark the first point
-        self.firstSphereActor = vtk.vtkActor()
-        self.firstSphereActor.SetMapper(self.firstSphereMapper)
-        self.firstSphereActor.GetProperty().SetColor(0, 1, 0)
-        self.firstSphereActor.VisibilityOff()
+        # self.firstSphereActor = vtk.vtkActor()
+        # self.firstSphereActor.SetMapper(self.firstSphereMapper)
+        # self.firstSphereActor.GetProperty().SetColor(0, 1, 0)
+        # self.firstSphereActor.VisibilityOff()
 
         # Used to mark the second point
-        self.secondSphereActor = vtk.vtkActor()
-        self.secondSphereActor.SetMapper(self.secondSphereMapper)
-        self.secondSphereActor.GetProperty().SetColor(0, 1, 0)
-        self.secondSphereActor.VisibilityOff()
+        # self.secondSphereActor = vtk.vtkActor()
+        # self.secondSphereActor.SetMapper(self.secondSphereMapper)
+        # self.secondSphereActor.GetProperty().SetColor(0, 1, 0)
+        # self.secondSphereActor.VisibilityOff()
 
         # Used to mark the third point
-        self.thirdSphereActor = vtk.vtkActor()
-        self.thirdSphereActor.SetMapper(self.thirdSphereMapper)
-        self.thirdSphereActor.GetProperty().SetColor(0, 1, 0)
-        self.thirdSphereActor.VisibilityOff()
+        # self.thirdSphereActor = vtk.vtkActor()
+        # self.thirdSphereActor.SetMapper(self.thirdSphereMapper)
+        # self.thirdSphereActor.GetProperty().SetColor(0, 1, 0)
+        # self.thirdSphereActor.VisibilityOff()
 
 """
     Description: 
@@ -143,8 +143,8 @@ class AngleMeasurementInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
             # Return a point in the world coordinate system on surface or out
             pickPosition = utils.getPickPosition(eventPosition, cellPicker, renderer, camera)
             # Used to mark the position of mouse in the world coordinate system
-            self.pipeline.firstSphereActor.SetPosition(pickPosition)
-            self.pipeline.firstSphereActor.VisibilityOn()
+            # self.pipeline.firstSphereActor.SetPosition(pickPosition)
+            # self.pipeline.firstSphereActor.VisibilityOn()
         else:
             # Return vtkPoints object
             points = self.pipeline.line.GetPoints()
@@ -155,8 +155,8 @@ class AngleMeasurementInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
             
             if self.checkNumberOfPoints == 1:
                 # Used to mark the position of mouse in the world coordinate system
-                self.pipeline.secondSphereActor.SetPosition(pickPosition)
-                self.pipeline.secondSphereActor.VisibilityOn()
+                # self.pipeline.secondSphereActor.SetPosition(pickPosition)
+                # self.pipeline.secondSphereActor.VisibilityOn()
 
                 # Save the second point with its id into vtkPoints object
                 points.SetPoint(1, pickPosition)
@@ -172,8 +172,8 @@ class AngleMeasurementInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
                 self.pipeline.line.InsertNextCell(vtk.VTK_LINE, idList)
             if self.checkNumberOfPoints == 2:
                 # Used to mark the position of mouse in the world coordinate system
-                self.pipeline.thirdSphereActor.SetPosition(pickPosition)
-                self.pipeline.thirdSphereActor.VisibilityOn()
+                # self.pipeline.thirdSphereActor.SetPosition(pickPosition)
+                # self.pipeline.thirdSphereActor.VisibilityOn()
 
                 # Save the third point with its id into vtkPoints object
                 points.SetPoint(2, pickPosition)
@@ -215,8 +215,8 @@ class AngleMeasurementInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
             pickPosition = utils.getPickPosition(eventPosition, cellPicker, renderer, camera)
 
             # Marking the first point
-            self.pipeline.firstSphereActor.GetProperty().SetColor(1, 0, 0)
-            self.pipeline.firstSphereActor.SetPosition(pickPosition)
+            # self.pipeline.firstSphereActor.GetProperty().SetColor(1, 0, 0)
+            # self.pipeline.firstSphereActor.SetPosition(pickPosition)
 
             # vtkPoints represents 3D points used to save 2 points in world coordinates
             points = vtk.vtkPoints()
@@ -243,8 +243,8 @@ class AngleMeasurementInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
                 pickPosition = points.GetPoint(1)
 
                 # Marking the second point
-                self.pipeline.secondSphereActor.GetProperty().SetColor(1, 0, 0)
-                self.pipeline.secondSphereActor.SetPosition(pickPosition)
+                # self.pipeline.secondSphereActor.GetProperty().SetColor(1, 0, 0)
+                # self.pipeline.secondSphereActor.SetPosition(pickPosition)
 
                 # Turn on the second line actor object
                 self.pipeline.secondLineActor.VisibilityOn()
@@ -257,8 +257,8 @@ class AngleMeasurementInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
                 pickPosition = points.GetPoint(2)
 
                 # Marking the third point
-                self.pipeline.thirdSphereActor.GetProperty().SetColor(1, 0, 0)
-                self.pipeline.thirdSphereActor.SetPosition(pickPosition)
+                # self.pipeline.thirdSphereActor.GetProperty().SetColor(1, 0, 0)
+                # self.pipeline.thirdSphereActor.SetPosition(pickPosition)
         # Override method of super class
         self.OnLeftButtonDown()
 
