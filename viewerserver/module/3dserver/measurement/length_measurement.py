@@ -48,7 +48,7 @@ class LengthMeasurementPipeline():
         self.textActor = vtk.vtkTextActor()
         textProperty = self.textActor.GetTextProperty()
         textProperty.SetColor(colors.GetColor3d("Tomato"))
-        textProperty.SetFontSize(15)
+        textProperty.SetFontSize(20)
         textProperty.ShadowOn()
         textProperty.BoldOn()
         self.textActor.VisibilityOff()
@@ -128,10 +128,11 @@ class LengthMeasurementInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
                 utils.buildTextActorLengthMeasurement(self.pipeline.textActor, renderer, points)
 
         else: # TODO: code need to processed in javascript
-            pickPosition = utils.getPickPosition(eventPosition, cellPicker, renderer, camera)
+            # pickPosition = utils.getPickPosition(eventPosition, cellPicker, renderer, camera)
             # Marking the position of mouse in world coordinates
             # self.pipeline.firstSphereActor.SetPosition(pickPosition)
             # self.pipeline.firstSphereActor.VisibilityOn() # Turn on the first sphere
+            pass
         self.GetInteractor().Render()
     
     """
@@ -176,10 +177,11 @@ class LengthMeasurementInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
             self.pipeline.lineActor.VisibilityOn() # Turn on line actor object
             self.pipeline.textActor.VisibilityOn() # Turn on text actor object
         elif self.checkNumberOfPoints == 2:
-            points = self.pipeline.line.GetPoints()
-            pickPosition = points.GetPoint(1) # Return the second point
+            # points = self.pipeline.line.GetPoints()
+            # pickPosition = points.GetPoint(1) # Return the second point
             # self.pipeline.secondSphereActor.GetProperty().SetColor(1, 0, 0) # Set red color for the second sphere
             # self.pipeline.secondSphereActor.SetPosition(pickPosition) # Set position for the second sphere
+            pass
         # Override method of super class
         self.OnLeftButtonDown()
 

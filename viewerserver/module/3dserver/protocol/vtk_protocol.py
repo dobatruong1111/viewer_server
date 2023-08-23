@@ -294,6 +294,7 @@ class Dicom3D(vtk_protocols.vtkWebProtocol):
         renderer.AddActor(pipeline.secondLineActor)
         renderer.AddActor(pipeline.arcActor)
         renderer.AddActor(pipeline.textActor)
+        renderer.AddActor(pipeline.markText)
 
         style = AngleMeasurementInteractorStyle(pipeline, self.afterInteractorStyle)
         renderWindowInteractor.SetInteractorStyle(style)

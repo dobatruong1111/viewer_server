@@ -79,10 +79,19 @@ class AngleMeasurementPipeline():
         self.textActor = vtk.vtkTextActor()
         textProperty = self.textActor.GetTextProperty()
         textProperty.SetColor(colors.GetColor3d("Tomato"))
-        textProperty.SetFontSize(15)
+        textProperty.SetFontSize(20)
         textProperty.ShadowOn()
         textProperty.BoldOn()
         self.textActor.VisibilityOff()
+
+        # Used to mark
+        self.markText = vtk.vtkTextActor()
+        markTextProperty = self.markText.GetTextProperty()
+        markTextProperty.SetColor(colors.GetColor3d("Tomato"))
+        markTextProperty.SetFontSize(20)
+        markTextProperty.ShadowOn()
+        markTextProperty.BoldOn()
+        self.markText.VisibilityOff()
 
         # Used to mark the first point
         # self.firstSphereActor = vtk.vtkActor()
@@ -141,10 +150,11 @@ class AngleMeasurementInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
 
         if not self.pipeline.isDragging:
             # Return a point in the world coordinate system on surface or out
-            pickPosition = utils.getPickPosition(eventPosition, cellPicker, renderer, camera)
+            # pickPosition = utils.getPickPosition(eventPosition, cellPicker, renderer, camera)
             # Used to mark the position of mouse in the world coordinate system
             # self.pipeline.firstSphereActor.SetPosition(pickPosition)
             # self.pipeline.firstSphereActor.VisibilityOn()
+            pass
         else:
             # Return vtkPoints object
             points = self.pipeline.line.GetPoints()
@@ -233,6 +243,13 @@ class AngleMeasurementInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
             # Insert the third point into vtkPoints object when having left button press, default value
             points.InsertNextPoint(0, 0, 0)
 
+            # Mark text when angle measurement
+            screenCoords = utils.convertFromWorldCoords2DisplayCoords(pickPosition, renderer)
+            self.pipeline.markText.SetInput("0°")
+            self.pipeline.markText.SetDisplayPosition(round(screenCoords[0]), round(screenCoords[1]))
+            # Turn on mark text
+            self.pipeline.markText.VisibilityOn()
+
             # Turn on the first line actor object
             self.pipeline.firstLineActor.VisibilityOn()
         else:
@@ -240,18 +257,12 @@ class AngleMeasurementInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
             points = self.pipeline.line.GetPoints()
             if self.checkNumberOfPoints == 2:
                 # Return the second point in vtkPoints object
-                pickPosition = points.GetPoint(1)
+                # pickPosition = points.GetPoint(1)
 
                 # Marking the second point
                 # self.pipeline.secondSphereActor.GetProperty().SetColor(1, 0, 0)
                 # self.pipeline.secondSphereActor.SetPosition(pickPosition)
-
-                # Turn on the second line actor object
-                self.pipeline.secondLineActor.VisibilityOn()
-                # Turn on the arc actor object
-                self.pipeline.arcActor.VisibilityOn()
-                # Turn on the text actor object
-                self.pipeline.textActor.VisibilityOn()
+                pass
             elif self.checkNumberOfPoints == 3:
                 # Return the third point in vtkPoints object
                 pickPosition = points.GetPoint(2)
@@ -259,6 +270,16 @@ class AngleMeasurementInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
                 # Marking the third point
                 # self.pipeline.thirdSphereActor.GetProperty().SetColor(1, 0, 0)
                 # self.pipeline.thirdSphereActor.SetPosition(pickPosition)
+
+                # Turn off mark text
+                self.pipeline.markText.VisibilityOff()
+                # Turn on the second line actor object
+                self.pipeline.secondLineActor.VisibilityOn()
+                # Turn on the arc actor object
+                self.pipeline.arcActor.VisibilityOn()
+                # Turn on the text actor object
+                self.pipeline.textActor.VisibilityOn()
+
         # Override method of super class
         self.OnLeftButtonDown()
 
