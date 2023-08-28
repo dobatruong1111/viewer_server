@@ -174,7 +174,7 @@ class _Server(vtk_wslink.ServerProtocol):
                 _Server.dicomDataPath = dicomDataPath
                 # print("Data finished")
                 stop = time.time()
-                logging.info("Data is finished - time: " + str(stop - start) + "s")
+                logging.info("Data is finished - time: " + str(round(stop - start, 3)) + "s")
             else:
                 # print(f"{url}\nStatus Code: {response.status_code}")
                 logging.error(f"{url} - {response.status_code}")
@@ -314,7 +314,7 @@ if __name__ == "__main__":
 
     thread_download_data = threading.Thread(
         target=_Server.save_all_instances,
-        args=(store, args.studyUUID, args.seriesUUID, dicomDataPath, statusFilePath,)
+        args=(store, args.studyUUID, args.seriesUUID, dicomDataPath, statusFilePath, 8,)
     )
     thread_download_data.start()
 

@@ -34,3 +34,25 @@ class Viewer3DRequestGetWebSocketLink(BaseSchema):
     seriesUUID: str
 
     session2D: str
+
+class APIResponseHeader:
+    def __init__(self, code: int, message: str) -> None:
+        self.code = code
+        self.message = message
+
+    def get_header(self) -> dict:
+        return {
+            "code": self.code,
+            "message": self.message
+        }
+
+class APIResponse:
+    def __init__(self, header: APIResponseHeader, body: str) -> None:
+        self.header = header
+        self.body = body
+
+    def get_response(self) -> dict:
+        return {
+            "header": self.header.get_header(),
+            "body": self.body
+        }

@@ -34,7 +34,8 @@ class Dicom3D(vtk_protocols.vtkWebProtocol):
         self.reader = vtk.vtkDICOMImageReader()
         # self.modifierLabelmap = vtk.vtkImageData()
         self.modifierLabelmap = None
-        self.mapper = vtk.vtkSmartVolumeMapper()
+        # self.mapper = vtk.vtkSmartVolumeMapper()
+        self.mapper = vtk.vtkFixedPointVolumeRayCastMapper()
         self.volProperty = vtk.vtkVolumeProperty()
         self.volume = vtk.vtkVolume()
         
