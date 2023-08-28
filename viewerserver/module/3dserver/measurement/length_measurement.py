@@ -16,8 +16,8 @@ class LengthMeasurementPipeline():
         self.line = vtk.vtkPolyData()
 
         # Sphere source
-        self.sphere = vtk.vtkSphereSource()
-        self.sphere.SetRadius(5)
+        # self.sphere = vtk.vtkSphereSource()
+        # self.sphere.SetRadius(5)
 
         # Filter
         # vtkTubeFilter is a filter that generates a tube around each input line
@@ -30,11 +30,11 @@ class LengthMeasurementPipeline():
         self.lineMapper = vtk.vtkPolyDataMapper()
         self.lineMapper.SetInputConnection(self.tubeFilter.GetOutputPort())
 
-        self.firstSphereMapper = vtk.vtkPolyDataMapper()
-        self.firstSphereMapper.SetInputConnection(self.sphere.GetOutputPort())
+        # self.firstSphereMapper = vtk.vtkPolyDataMapper()
+        # self.firstSphereMapper.SetInputConnection(self.sphere.GetOutputPort())
 
-        self.secondSphereMapper = vtk.vtkPolyDataMapper()
-        self.secondSphereMapper.SetInputConnection(self.sphere.GetOutputPort())
+        # self.secondSphereMapper = vtk.vtkPolyDataMapper()
+        # self.secondSphereMapper.SetInputConnection(self.sphere.GetOutputPort())
         
         # Actors
         self.lineActor = vtk.vtkActor()
@@ -48,21 +48,21 @@ class LengthMeasurementPipeline():
         self.textActor = vtk.vtkTextActor()
         textProperty = self.textActor.GetTextProperty()
         textProperty.SetColor(colors.GetColor3d("Tomato"))
-        textProperty.SetFontSize(15)
+        textProperty.SetFontSize(20)
         textProperty.ShadowOn()
         textProperty.BoldOn()
         self.textActor.VisibilityOff()
 
         # Marking the first point and the second point by two spheres
-        self.firstSphereActor = vtk.vtkActor()
-        self.firstSphereActor.GetProperty().SetColor(0, 1, 0)
-        self.firstSphereActor.SetMapper(self.firstSphereMapper)
-        self.firstSphereActor.VisibilityOff()
+        # self.firstSphereActor = vtk.vtkActor()
+        # self.firstSphereActor.GetProperty().SetColor(0, 1, 0)
+        # self.firstSphereActor.SetMapper(self.firstSphereMapper)
+        # self.firstSphereActor.VisibilityOff()
         
-        self.secondSphereActor = vtk.vtkActor()
-        self.secondSphereActor.GetProperty().SetColor(0, 1, 0)
-        self.secondSphereActor.SetMapper(self.secondSphereMapper)
-        self.secondSphereActor.VisibilityOff()
+        # self.secondSphereActor = vtk.vtkActor()
+        # self.secondSphereActor.GetProperty().SetColor(0, 1, 0)
+        # self.secondSphereActor.SetMapper(self.secondSphereMapper)
+        # self.secondSphereActor.VisibilityOff()
 
 """
     Description: 
@@ -109,8 +109,8 @@ class LengthMeasurementInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
                 pickPosition = utils.getPickPosition(eventPosition, cellPicker, renderer, camera, True, firstPoint)
                 
                 # Marking the second point when drawing
-                self.pipeline.secondSphereActor.SetPosition(pickPosition)
-                self.pipeline.secondSphereActor.VisibilityOn() # Turn on the second sphere
+                # self.pipeline.secondSphereActor.SetPosition(pickPosition)
+                # self.pipeline.secondSphereActor.VisibilityOn() # Turn on the second sphere
 
                 # Save the second point
                 points.SetPoint(1, pickPosition)
@@ -128,10 +128,11 @@ class LengthMeasurementInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
                 utils.buildTextActorLengthMeasurement(self.pipeline.textActor, renderer, points)
 
         else: # TODO: code need to processed in javascript
-            pickPosition = utils.getPickPosition(eventPosition, cellPicker, renderer, camera)
+            # pickPosition = utils.getPickPosition(eventPosition, cellPicker, renderer, camera)
             # Marking the position of mouse in world coordinates
-            self.pipeline.firstSphereActor.SetPosition(pickPosition)
-            self.pipeline.firstSphereActor.VisibilityOn() # Turn on the first sphere
+            # self.pipeline.firstSphereActor.SetPosition(pickPosition)
+            # self.pipeline.firstSphereActor.VisibilityOn() # Turn on the first sphere
+            pass
         self.GetInteractor().Render()
     
     """
@@ -157,8 +158,8 @@ class LengthMeasurementInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
             pickPosition = utils.getPickPosition(eventPosition, cellPicker, renderer, camera)
     
             # Marking the first point when having left button down event
-            self.pipeline.firstSphereActor.GetProperty().SetColor(1, 0, 0)
-            self.pipeline.firstSphereActor.SetPosition(pickPosition)
+            # self.pipeline.firstSphereActor.GetProperty().SetColor(1, 0, 0)
+            # self.pipeline.firstSphereActor.SetPosition(pickPosition)
 
             # vtkPoints represents 3D points used to save 2 points in world coordinates
             points = vtk.vtkPoints()
@@ -176,10 +177,11 @@ class LengthMeasurementInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
             self.pipeline.lineActor.VisibilityOn() # Turn on line actor object
             self.pipeline.textActor.VisibilityOn() # Turn on text actor object
         elif self.checkNumberOfPoints == 2:
-            points = self.pipeline.line.GetPoints()
-            pickPosition = points.GetPoint(1) # Return the second point
-            self.pipeline.secondSphereActor.GetProperty().SetColor(1, 0, 0) # Set red color for the second sphere
-            self.pipeline.secondSphereActor.SetPosition(pickPosition) # Set position for the second sphere
+            # points = self.pipeline.line.GetPoints()
+            # pickPosition = points.GetPoint(1) # Return the second point
+            # self.pipeline.secondSphereActor.GetProperty().SetColor(1, 0, 0) # Set red color for the second sphere
+            # self.pipeline.secondSphereActor.SetPosition(pickPosition) # Set position for the second sphere
+            pass
         # Override method of super class
         self.OnLeftButtonDown()
 

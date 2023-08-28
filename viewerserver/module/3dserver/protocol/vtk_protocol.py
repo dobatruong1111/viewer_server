@@ -327,8 +327,8 @@ class Dicom3D(vtk_protocols.vtkWebProtocol):
         self.initObjectsMeasurementTool(renderWindowInteractor)
 
         pipeline = LengthMeasurementPipeline()
-        renderer.AddActor(pipeline.firstSphereActor)
-        renderer.AddActor(pipeline.secondSphereActor)
+        # renderer.AddActor(pipeline.firstSphereActor)
+        # renderer.AddActor(pipeline.secondSphereActor)
         renderer.AddActor(pipeline.lineActor)
         renderer.AddActor(pipeline.textActor)
 
@@ -346,13 +346,14 @@ class Dicom3D(vtk_protocols.vtkWebProtocol):
         self.initObjectsMeasurementTool(renderWindowInteractor)
 
         pipeline = AngleMeasurementPipeline()
-        renderer.AddActor(pipeline.firstSphereActor)
-        renderer.AddActor(pipeline.secondSphereActor)
-        renderer.AddActor(pipeline.thirdSphereActor)
+        # renderer.AddActor(pipeline.firstSphereActor)
+        # renderer.AddActor(pipeline.secondSphereActor)
+        # renderer.AddActor(pipeline.thirdSphereActor)
         renderer.AddActor(pipeline.firstLineActor)
         renderer.AddActor(pipeline.secondLineActor)
         renderer.AddActor(pipeline.arcActor)
         renderer.AddActor(pipeline.textActor)
+        renderer.AddActor(pipeline.markText)
 
         style = AngleMeasurementInteractorStyle(pipeline, self.afterInteractorStyle)
         renderWindowInteractor.SetInteractorStyle(style)

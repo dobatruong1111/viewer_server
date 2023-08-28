@@ -222,8 +222,9 @@ def buildArcAngleMeasurement(arc: vtk.vtkArcSource, textActor: vtk.vtkTextActor,
             lText * (-1.0 if longArc else 1.0) * vector3[2] + secondPoint[2]
         ]
         # Convert to the display coordinate system
-        textActorPositionDisplay = convertFromWorldCoords2DisplayCoords(textActorPositionWorld, renderer)
-        textActor.SetInput(f"{round(angle, 1)}deg")
+        # textActorPositionDisplay = convertFromWorldCoords2DisplayCoords(textActorPositionWorld, renderer)
+        textActorPositionDisplay = convertFromWorldCoords2DisplayCoords(secondPoint, renderer)
+        textActor.SetInput(f"{round(angle, 1)}°")
         textActor.SetPosition(round(textActorPositionDisplay[0]), round(textActorPositionDisplay[1]))
 
 """
