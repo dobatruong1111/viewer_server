@@ -9,7 +9,7 @@ class StoreRequestDTOCreate(BaseSchema):
 
 
 class ViewerRequestDTOCreate(BaseSchema):
-    userId : Optional[str]
+    userID : Optional[str]
 
     expireIn : int
 

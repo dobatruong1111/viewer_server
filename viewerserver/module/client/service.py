@@ -25,9 +25,9 @@ class RequestService:
             store = obj.studyUIDs[study_iuid]
             json = {
                 "id": session_id + "-" + study_iuid,
-                "user_id": obj.userId,
+                "user_id": obj.userID,
                 "owner_session": "",
-                "owner_user_id": obj.userId,
+                "owner_user_id": obj.userID,
                 "session": session_id,
                 "store_authentication": store.authentication,
                 "store_url": store.url,
@@ -39,7 +39,7 @@ class RequestService:
             print(await self._repository.create(session))
 
         url = "/viewer/index.html?session=" + session_id + "&studies=" + ",".join(obj.studyUIDs)
-        return url if obj.userId is None else url + "&userID=" + obj.userId
+        return url if obj.userID is None else url + "&userID=" + obj.userID
 
     async def get_shared_viewer_url(self, sessionID: str, obj: ViewerShareDTOCreate) -> str:
         sessions =  await self._repository.get_all_by_session(sessionID)
