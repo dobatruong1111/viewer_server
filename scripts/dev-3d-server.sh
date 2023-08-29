@@ -24,11 +24,7 @@ then
     # docker run -d -it --rm --name itech-apache2 -p ${PORT_MAPPING} -v ./viewerserver/module/3dserver/apache2/000-default.conf:${APACHE_CONFIG_PATH} -v ./viewerserver/module/3dserver/proxy/proxy-mapping.txt:${PROXY_MAPPING_PATH} itech/apache2
 
     # Run the image on window
-<<<<<<< scripts/dev-3d-server.sh
-    # docker run -d -it --rm --name itech-apache2 -p ${PORT_MAPPING} -v (absolute path to 000-default.conf):${APACHE_CONFIG_PATH} -v (absolute path to proxy-mapping.txt):${PROXY_MAPPING_PATH} itech/apache2
-=======
-    # docker run -d -it --rm --name itech-apache2 -p ${PORT_MAPPING} -v (absolute path to 000-default.conf):${APACHE_CONFIG_PATH} -v (absolute path to proxy-mapping.txt):${PROXY_MAPPING_PATH} itech/apache2
->>>>>>> scripts/dev-3d-server.sh
+    # docker run -d -it --rm --name itech-apache2 -p $PORT_MAPPING -v (absolute path to 000-default.conf):${APACHE_CONFIG_PATH} -v (absolute path to proxy-mapping.txt):${PROXY_MAPPING_PATH} itech/apache2
 
     echo "Apache Server is running"
 fi
