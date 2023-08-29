@@ -9,10 +9,10 @@ PORT_MAPPING="$PORT_APACHE:80"
 APACHE_CONFIG_PATH=/etc/apache2/sites-available/000-default.conf
 PROXY_MAPPING_PATH=/proxy/proxy-mapping.txt
 
-if [ "$(docker ps | grep itech-apache2)" != "" ]
-then
-    docker stop itech-apache2
-fi
+# if [ "$(docker ps | grep itech-apache2)" != "" ]
+# then
+#     docker stop itech-apache2
+# fi
 
 # Start Apache Service if not run already
 if [ "$(docker ps | grep itech-apache2)" = "" ]
