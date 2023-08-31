@@ -4,10 +4,12 @@ from vtk.util.numpy_support import vtk_to_numpy, numpy_to_vtk
 
 from enum import Enum
 from typing import List, Tuple
-import time
+import time, logging, os
 
 from cropping import utils
 from measurement.utils import AfterInteractorStyle
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
 class Operation(Enum): 
     INSIDE=1,
@@ -80,9 +82,14 @@ class CropFreehandInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
         # Clipping range
         self.clippingRange = None
         # Masked image data
-        self.maskedImageData = vtk.vtkImageData()
+        # self.maskedImageData = vtk.vtkImageData()
+        self.maskedImageData = None
         # Thresholding of modifierLabelmap
         self.thresh = vtk.vtkImageThreshold()
+        # Closed surface
+        self.closedSurfacePolyData = vtk.vtkPolyData()
+
+        self.orientedBrushPositionerOutput = vtk.vtkImageData()
     
         # Events
         self.AddObserver(vtkCommand.LeftButtonPressEvent, self.__leftButtonPressEvent)
@@ -183,12 +190,19 @@ class CropFreehandInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
             eventPosition = self.GetInteractor().GetEventPosition()
             self.contour2Dpipeline.isDragging = False
             
+            total_memory, used_memory, free_memory = map(int, os.popen('free -t -m').readlines()[-1].split()[1:])
+            logging.info(f"Total Memory: " + str(total_memory) + "MB" + " - Used Memory: " + str(used_memory) + "MB" + r" - RAM Memory % Used: " + str(round((used_memory/total_memory) * 100, 2)))
+
             self.__updateGlyphWithNewPosition(eventPosition, True)
             start = time.time()
             self.__paintApply()
             stop = time.time()
-            print("-----")
-            print("__paintApply():", stop - start)
+            # print("-----")
+            # print("__paintApply():", stop - start)
+            
+            total_memory2, used_memory2, free_memory2 = map(int, os.popen('free -t -m').readlines()[-1].split()[1:])
+            logging.info("Total Memory: " + str(total_memory2) + "MB" + " - Used Memory: " + str(used_memory2) + "MB" + r" - RAM Memory % Used: " + str(round((used_memory2/total_memory2) * 100, 2)))
+            logging.info("Cropping freehand tool" + " - Time: " + str(round(stop - start, 3)) + "s" + " - Used Memory: " + str(used_memory2 - used_memory) + "MB" + r" - RAM Memory % Used: " + str(round(((used_memory2/total_memory2) * 100) - ((used_memory/total_memory) * 100), 2)))
 
             renderer.RemoveActor(self.contour2Dpipeline.actor)
             renderer.RemoveActor(self.contour2Dpipeline.actorThin)
@@ -263,7 +277,8 @@ class CropFreehandInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
             renderer.DisplayToWorld()
             worldCoords = renderer.GetWorldPoint()
             if worldCoords[3] == 0:
-                print("Bad homogeneous coordinates")
+                # print("Bad homogeneous coordinates")
+                logging.info("Bad homogeneous coordinates - __updateBrushModel() function - cropping freehand tool")
                 return False
             
             # Convert from homo coordinates to world coordinates
@@ -280,7 +295,8 @@ class CropFreehandInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
                 ray[i] = pickPosition[i] - cameraPos[i] # vector
             rayLength = vtk.vtkMath().Dot(cameraDOP, ray)
             if rayLength == 0:
-                print("Cannot process points")
+                # print("Cannot process points")
+                logging.error("Cannot process points - __updateBrushModel() function - cropping freehand tool")
                 return False
 
             # Finding a point on the near clipping plane and a point on the far clipping plane 
@@ -327,12 +343,12 @@ class CropFreehandInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
         
         # Construct polydata
         # closedSurfacePolyData = self.contour2Dpipeline.polyData3D
-        closedSurfacePolyData = vtk.vtkPolyData()
-        closedSurfacePolyData.SetPoints(closedSurfacePoints)
-        closedSurfacePolyData.SetStrips(closedSurfaceStrips)
-        closedSurfacePolyData.SetPolys(closedSurfacePolys)
+        # closedSurfacePolyData = vtk.vtkPolyData()
+        self.closedSurfacePolyData.SetPoints(closedSurfacePoints)
+        self.closedSurfacePolyData.SetStrips(closedSurfaceStrips)
+        self.closedSurfacePolyData.SetPolys(closedSurfacePolys)
 
-        self.brushPolyDataNormals.SetInputData(closedSurfacePolyData)
+        self.brushPolyDataNormals.SetInputData(self.closedSurfacePolyData)
         self.brushPolyDataNormals.Update()
 
         return True
@@ -364,16 +380,16 @@ class CropFreehandInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
         Set spacing, origin and direction.
     '''
     def __paintApply(self) -> None:
-        start = time.time()
+        # start = time.time()
         if not self.__updateBrushModel():
             return
-        stop = time.time()
-        print("__updateBrushModel():", stop-start)
+        # stop = time.time()
+        # print("__updateBrushModel():", stop-start)
         
-        start = time.time()
+        # start = time.time()
         self.__updateBrushStencil()
-        stop = time.time()
-        print("__updateBrushStencil():", stop-start)
+        # stop = time.time()
+        # print("__updateBrushStencil():", stop-start)
 
         self.brushPolyDataToStencil.Update()
     
@@ -388,19 +404,19 @@ class CropFreehandInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
         stencilToImage.SetOutputScalarType(self.modifierLabelmap.GetScalarType()) # vtk.VTK_SHORT: [-32768->32767], vtk.VTK_UNSIGNED_CHAR: [0->255]
         stencilToImage.Update()
 
-        orientedBrushPositionerOutput = vtk.vtkImageData()
-        orientedBrushPositionerOutput.DeepCopy(stencilToImage.GetOutput())
+        # orientedBrushPositionerOutput = vtk.vtkImageData()
+        self.orientedBrushPositionerOutput.DeepCopy(stencilToImage.GetOutput())
 
         imageToWorld = vtk.vtkMatrix4x4()
         utils.GetImageToWorldMatrix(self.modifierLabelmap, imageToWorld)
 
-        utils.SetImageToWorldMatrix(orientedBrushPositionerOutput, imageToWorld)
+        utils.SetImageToWorldMatrix(self.orientedBrushPositionerOutput, imageToWorld)
 
-        utils.modifyImage(self.modifierLabelmap, orientedBrushPositionerOutput)
-        start = time.time()
+        utils.modifyImage(self.modifierLabelmap, self.orientedBrushPositionerOutput)
+        # start = time.time()
         self.__maskVolume()
-        stop = time.time()
-        print("__maskVolume():", stop-start)
+        # stop = time.time()
+        # print("__maskVolume():", stop-start)
 
     '''
     Description: Apply the mask for volume and render the new volume
@@ -411,13 +427,13 @@ class CropFreehandInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
         # Hard, Soft edge
         # Thresholding of modifierLabelmap
         # thresh = vtk.vtkImageThreshold()
-        maskMin = 0
-        maskMax = 1
+        # maskMin = 0
+        # maskMax = 1
         self.thresh.SetOutputScalarTypeToUnsignedChar() # vtk.VTK_UNSIGNED_CHAR: 0-255
         self.thresh.SetInputData(self.modifierLabelmap)
         self.thresh.ThresholdByLower(0) # <= 0
-        self.thresh.SetInValue(maskMin)
-        self.thresh.SetOutValue(maskMax)
+        self.thresh.SetInValue(0)
+        self.thresh.SetOutValue(1)
         self.thresh.Update()
         maskImage = self.thresh.GetOutput()
 
@@ -428,10 +444,12 @@ class CropFreehandInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
 
         result = numpy_to_vtk(resultArray.astype(self.imageDataArray.dtype).reshape(1, -1)[0])
         
-        self.maskedImageData.SetExtent(self.modifierLabelmap.GetExtent())
-        self.maskedImageData.SetOrigin(self.modifierLabelmap.GetOrigin())
-        self.maskedImageData.SetSpacing(self.modifierLabelmap.GetSpacing())
-        self.maskedImageData.SetDirectionMatrix(self.modifierLabelmap.GetDirectionMatrix())
+        if self.maskedImageData is None:
+            self.maskedImageData = vtk.vtkImageData()
+            self.maskedImageData.SetExtent(self.modifierLabelmap.GetExtent())
+            self.maskedImageData.SetOrigin(self.modifierLabelmap.GetOrigin())
+            self.maskedImageData.SetSpacing(self.modifierLabelmap.GetSpacing())
+            self.maskedImageData.SetDirectionMatrix(self.modifierLabelmap.GetDirectionMatrix())
         self.maskedImageData.GetPointData().SetScalars(result)
         
         # Render the new volume

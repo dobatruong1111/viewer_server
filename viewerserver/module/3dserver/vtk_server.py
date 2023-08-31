@@ -50,11 +50,13 @@ import time
 import threading
 import json
 import enum
+import logging
 
 from utils.utils import MyAuth
 from dotenv import load_dotenv
-load_dotenv(verbose=True)
 
+load_dotenv(verbose=True)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 # =============================================================================
 # Server class
 # =============================================================================
@@ -103,7 +105,7 @@ class _Server(vtk_wslink.ServerProtocol):
         studyUUID: str
     ) -> Dict:
         store = {
-            "store_url": "http://27.72.147.196:37000/orthanc/wado-rs",
+            "store_url": "http://27.72.147.196:38040/orthanc/wado-rs",
             "store_authentication": "Basic b3J0aGFuYzpvcnRoYW5j"
         }
         try:
@@ -117,7 +119,8 @@ class _Server(vtk_wslink.ServerProtocol):
             store["store_url"] = res["store_url"]
             store["store_authentication"] = res["store_authentication"]
         except Exception as e:
-            print(f"Error: {e}")
+            # print(f"Error: {e}")
+            logging.error(e)
         finally:
             return store
         
@@ -138,6 +141,7 @@ class _Server(vtk_wslink.ServerProtocol):
                 auth = MyAuth(store["store_authentication"])
             )
             if response.status_code == 200:
+                start = time.time()
                 if _Server.get_data_status(statusFilePath) == Status.NONE.value:
                     _Server.add_data_path_and_data_status(statusFilePath, Status.DOWNLOADING.value)
 
@@ -164,14 +168,19 @@ class _Server(vtk_wslink.ServerProtocol):
                     _Server.add_data_path_and_data_status(statusFilePath, Status.DONE.value)
                 else:
                     while _Server.get_data_status(statusFilePath) == Status.DOWNLOADING.value:
-                        print("Waiting 5 seconds...")
+                        # print("Waiting 5 seconds...")
+                        logging.info("Waiting 5 seconds... because another process is downloading data...")
                         time.sleep(5)
                 _Server.dicomDataPath = dicomDataPath
-                print("Data finished")
+                # print("Data finished")
+                stop = time.time()
+                logging.info("Data is finished - time: " + str(round(stop - start, 3)) + "s")
             else:
-                print(f"{url}\nStatus Code: {response.status_code}")
+                # print(f"{url}\nStatus Code: {response.status_code}")
+                logging.error(f"{url} - {response.status_code}")
         except Exception as e:
-            print(f"Error: {e}")
+            # print(f"Error: {e}")
+            logging.error(e)
     
     @staticmethod
     def save_instances(
@@ -205,10 +214,13 @@ class _Server(vtk_wslink.ServerProtocol):
                     with open(dicomDataPath + dicomFile, "wb") as file:
                         file.write(bytes)
                 else:
-                    print(f"{response.url}\nStatus Code: {response.status_code}")
-            print(f"{name}: Done")
+                    # print(f"{response.url}\nStatus Code: {response.status_code}")
+                    logging.info(f"{response.url} - {response.status_code}")
+            # print(f"{name}: Done")
+            logging.info(f"{name}: Done")
         except Exception as e:
-            print(f"Error: {e}")
+            # print(f"Error: {e}")
+            logging.error(e)
 
     @staticmethod
     def add_data_path_and_data_status(statusFilePath: str, dataStatus: str) -> None:
@@ -302,7 +314,7 @@ if __name__ == "__main__":
 
     thread_download_data = threading.Thread(
         target=_Server.save_all_instances,
-        args=(store, args.studyUUID, args.seriesUUID, dicomDataPath, statusFilePath,)
+        args=(store, args.studyUUID, args.seriesUUID, dicomDataPath, statusFilePath, 8,)
     )
     thread_download_data.start()
 
