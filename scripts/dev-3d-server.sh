@@ -9,6 +9,11 @@ PORT_MAPPING="$PORT_APACHE:80"
 APACHE_CONFIG_PATH=/etc/apache2/sites-available/000-default.conf
 PROXY_MAPPING_PATH=/proxy/proxy-mapping.txt
 
+# if [ "$(docker ps | grep itech-apache2)" != "" ]
+# then
+#     docker stop itech-apache2
+# fi
+
 # Start Apache Service if not run already
 if [ "$(docker ps | grep itech-apache2)" = "" ]
 then
@@ -20,7 +25,6 @@ then
 
     # Run the image on window
     # docker run -d -it --rm --name itech-apache2 -p $PORT_MAPPING -v (absolute path to 000-default.conf):${APACHE_CONFIG_PATH} -v (absolute path to proxy-mapping.txt):${PROXY_MAPPING_PATH} itech/apache2
-    docker run -d -it --rm --name itech-apache2 -p ${PORT_MAPPING} -v "D:\viewer-server\viewerserver\module\3dserver\apache2\000-default.conf":${APACHE_CONFIG_PATH} -v "D:\viewer-server\viewerserver\module\3dserver\proxy\proxy-mapping.txt":${PROXY_MAPPING_PATH} itech/apache2
 
     echo "Apache Server is running"
 fi
