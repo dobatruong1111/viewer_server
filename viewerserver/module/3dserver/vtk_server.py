@@ -105,7 +105,7 @@ class _Server(vtk_wslink.ServerProtocol):
         studyUUID: str
     ) -> Dict:
         store = {
-            "store_url": "http://27.72.147.196:37000/orthanc/wado-rs",
+            "store_url": "http://27.72.147.196:38040/orthanc/wado-rs",
             "store_authentication": "Basic b3J0aGFuYzpvcnRoYW5j"
         }
         try:
