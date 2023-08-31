@@ -27,7 +27,7 @@ from .service import RequestService
 @router.post("/client/getlink", status_code=status.HTTP_201_CREATED)
 async def get_link(
     payload: ViewerRequestDTOCreate, db: AsyncSession = Depends(get_db)
-) -> Union(dict, str):
+) -> Union[dict, str]:
     try:
         url = await RequestService(db).get_new_viewer_url(payload)
         header = APIResponseHeader(
