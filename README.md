@@ -34,7 +34,7 @@ sh scripts/dev.sh
     "expireIn":600,
     "studyUIDs": {
         "1.2.840.113619.2.417.3.2831163337.337.1669159714.820": {
-            "url": "http://27.72.147.196:37000/orthanc/wado-rs",
+            "url": "http://27.72.147.196:38040/orthanc/wado-rs",
             "authentication": "Basic b3J0aGFuYzpvcnRoYW5j"
         }
     }
@@ -89,7 +89,7 @@ sh entrypoint.sh
     "expireIn":600,
     "studyUIDs": {
         "1.2.840.113619.2.417.3.2831163337.337.1669159714.820": {
-            "url": "http://27.72.147.196:37000/orthanc/wado-rs",
+            "url": "http://27.72.147.196:38040/orthanc/wado-rs",
             "authentication": "Basic b3J0aGFuYzpvcnRoYW5j"
         }
     }
