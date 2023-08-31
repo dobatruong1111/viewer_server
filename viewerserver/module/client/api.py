@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 
@@ -14,10 +14,11 @@ from ...module.sessions.repository import SessionsRepository
 
 from ...module.sessions.schema import OutSessionSchema
 
-from .schema import (
-    ViewerRequestDTOCreate, ViewerShareDTOCreate, Viewer3DRequestGetWebSocketLink, 
-    APIResponseHeader, APIResponse
-)
+from .schema import ViewerRequestDTOCreate, ViewerShareDTOCreate, Viewer3DRequestGetWebSocketLink
+
+from ...responses import APIResponseHeader, APIResponse
+
+from typing import Union
 
 router = APIRouter(prefix="/ws/rest", tags=['client-api'])
 
@@ -26,27 +27,21 @@ from .service import RequestService
 @router.post("/client/getlink", status_code=status.HTTP_201_CREATED)
 async def get_link(
     payload: ViewerRequestDTOCreate, db: AsyncSession = Depends(get_db)
-) -> dict:
+) -> Union(dict, str):
     try:
         url = await RequestService(db).get_new_viewer_url(payload)
+        header = APIResponseHeader(
+            code = status.HTTP_200_OK, 
+            message = "Session Created"
+        )
         responseJson = APIResponse(
-            header = APIResponseHeader(
-                code = status.HTTP_200_OK, 
-                message = "Session Created"
-            ),
+            header = header,
             body = url
         )
-        return JSONResponse(status_code=status.HTTP_200_OK, content=responseJson.get_response())
-    except:
-        responseJson = APIResponse(
-            header = APIResponseHeader(
-                code = status.HTTP_400_BAD_REQUEST, 
-                message = "Session is not Created"
-            ),
-            body = ""
-        )
-        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content=responseJson.get_response())
-
+        return JSONResponse(status_code=status.HTTP_200_OK, content=vars(responseJson))
+    except Exception as e:
+        return Response(status_code=status.HTTP_400_BAD_REQUEST, content=f"Exception: {e}")
+    
 @router.post("/session/{sessionID}/share", status_code=status.HTTP_201_CREATED)
 async def get_link(
     sessionID: str,
