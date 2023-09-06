@@ -15,6 +15,7 @@ from cropping.crop_freehand import Contour2DPipeline, CropFreehandInteractorStyl
 from cropping.utils import IPWCallback
 
 from panning.panning_3dobject import PanningInteractorStyle
+from utils.utils import getInfoMemory
 
 import time, logging, os
 
@@ -132,9 +133,10 @@ class Dicom3D(vtk_protocols.vtkWebProtocol):
             self.checkBox = False
 
     @exportRpc("vtk.initialize")
-    def createVisualization(self):
-        total_memory, used_memory, free_memory = map(int, os.popen('free -t -m').readlines()[-1].split()[1:])
-        logging.info("Total Memory: " + str(total_memory) + "MB" + " - Used Memory: " + str(used_memory) + "MB" + r" - RAM Memory % Used: " + str(round((used_memory/total_memory) * 100, 2)))
+    def createVisualization(self) -> None:
+        if getInfoMemory() is not None:
+            total_memory, used_memory, free_memory = getInfoMemory()
+            logging.info("Total Memory: " + str(total_memory) + "MB" + " - Used Memory: " + str(used_memory) + "MB" + r" - RAM Memory % Used: " + str(round((used_memory/total_memory) * 100, 2)))
 
         renderWindowInteractor = self.getApplication().GetObjectIdMap().GetActiveObject("INTERACTOR")
         renderWindow = self.getView('-1')
@@ -224,14 +226,15 @@ class Dicom3D(vtk_protocols.vtkWebProtocol):
         # Render Window Interactor
         # renderWindowInteractor.SetPicker(self.cellPicker)
 
-        total_memory2, used_memory2, free_memory2 = map(int, os.popen('free -t -m').readlines()[-1].split()[1:])
-        logging.info("Total Memory: " + str(total_memory2) + "MB" + " - Used Memory: " + str(used_memory2) + "MB" + r" - RAM Memory % Used: " + str(round((used_memory2/total_memory2) * 100, 2)))
-        logging.info("Initialize 3D Object Function" + " - Used Memory: " + str(used_memory2 - used_memory) + "MB" + r" - RAM Memory % Used: " + str(round(((used_memory2/total_memory2) * 100) - ((used_memory/total_memory) * 100), 2)))
+        if getInfoMemory() is not None:
+            total_memory2, used_memory2, free_memory2 = getInfoMemory()
+            logging.info("Total Memory: " + str(total_memory2) + "MB" + " - Used Memory: " + str(used_memory2) + "MB" + r" - RAM Memory % Used: " + str(round((used_memory2/total_memory2) * 100, 2)))
+            logging.info("Initialize 3D Object Function" + " - Used Memory: " + str(used_memory2 - used_memory) + "MB" + r" - RAM Memory % Used: " + str(round(((used_memory2/total_memory2) * 100) - ((used_memory/total_memory) * 100), 2)))
 
         # return self.resetCamera()
 
     @exportRpc("vtk.dicom3d.light")
-    def light(self):
+    def light(self) -> None:
         renderWindow = self.getView('-1')
         renderer = renderWindow.GetRenderers().GetFirstRenderer()
 
@@ -253,7 +256,7 @@ class Dicom3D(vtk_protocols.vtkWebProtocol):
         self.getApplication().InvokeEvent(vtkCommand.UpdateEvent)
         
     @exportRpc("vtk.dicom3d.presets.bone.ct")
-    def showBoneCT(self):
+    def showBoneCT(self) -> None:
         renderWindow = self.getView('-1')
         self.colorMappingWithStandardCT()
 
@@ -266,7 +269,7 @@ class Dicom3D(vtk_protocols.vtkWebProtocol):
         self.getApplication().InvokeEvent(vtkCommand.UpdateEvent)
       
     @exportRpc("vtk.dicom3d.presets.angio.ct")
-    def showAngioCT(self):
+    def showAngioCT(self) -> None:
         renderWindow = self.getView('-1')
         self.colorMappingWithStandardCT()
 
@@ -279,7 +282,7 @@ class Dicom3D(vtk_protocols.vtkWebProtocol):
         self.getApplication().InvokeEvent(vtkCommand.UpdateEvent)
 
     @exportRpc("vtk.dicom3d.presets.muscle.ct")
-    def showMuscleCT(self):
+    def showMuscleCT(self) -> None:
         renderWindow = self.getView('-1')
         self.colorMappingWithStandardCT()
 
@@ -292,7 +295,7 @@ class Dicom3D(vtk_protocols.vtkWebProtocol):
         self.getApplication().InvokeEvent(vtkCommand.UpdateEvent)
 
     @exportRpc("vtk.dicom3d.presets.mip")
-    def showMip(self):
+    def showMip(self) -> None:
         renderWindow = self.getView('-1')
 
         self.color.RemoveAllPoints()
@@ -320,7 +323,7 @@ class Dicom3D(vtk_protocols.vtkWebProtocol):
             renderWindowInteractor.SetPicker(self.cellPicker)
 
     @exportRpc("vtk.dicom3d.length.measurement")
-    def length_measurement_handle(self):
+    def length_measurement_handle(self) -> None:
         renderWindowInteractor = self.getApplication().GetObjectIdMap().GetActiveObject("INTERACTOR")
         renderWindow = self.getView('-1')
         renderer = renderWindow.GetRenderers().GetFirstRenderer()
@@ -339,7 +342,7 @@ class Dicom3D(vtk_protocols.vtkWebProtocol):
         self.getApplication().InvokeEvent(vtkCommand.UpdateEvent)
 
     @exportRpc("vtk.dicom3d.angle.measurement")
-    def angle_measurement_handle(self):
+    def angle_measurement_handle(self) -> None:
         renderWindowInteractor = self.getApplication().GetObjectIdMap().GetActiveObject("INTERACTOR")
         renderWindow = self.getView('-1')
         renderer = renderWindow.GetRenderers().GetFirstRenderer()
@@ -362,7 +365,7 @@ class Dicom3D(vtk_protocols.vtkWebProtocol):
         self.getApplication().InvokeEvent(vtkCommand.UpdateEvent)
 
     @exportRpc("vtk.dicom3d.crop")
-    def crop3d(self):
+    def crop3d(self) -> None:
         # self.getApplication() -> vtkWebApplication()
         renderWindowInteractor = self.getApplication().GetObjectIdMap().GetActiveObject("INTERACTOR")
         renderWindow = self.getView('-1')
@@ -397,7 +400,7 @@ class Dicom3D(vtk_protocols.vtkWebProtocol):
         self.getApplication().InvokeEvent(vtkCommand.UpdateEvent)
 
     @exportRpc("vtk.dicom3d.crop.freehand")
-    def crop_freehand_handle(self, operation: Operation = Operation.INSIDE, fillValue: int = -1000):
+    def crop_freehand_handle(self, operation: Operation = Operation.INSIDE, fillValue: int = -1000) -> None:
         renderWindowInteractor = self.getApplication().GetObjectIdMap().GetActiveObject("INTERACTOR")
         renderWindow = self.getView('-1')
         renderer = renderWindow.GetRenderers().GetFirstRenderer()
@@ -438,7 +441,7 @@ class Dicom3D(vtk_protocols.vtkWebProtocol):
         self.getApplication().InvokeEvent(vtkCommand.UpdateEvent)
 
     @exportRpc("vtk.camera.reset")
-    def resetCamera(self):
+    def resetCamera(self) -> None:
         renderWindowInteractor = self.getApplication().GetObjectIdMap().GetActiveObject("INTERACTOR")
         renderWindow = self.getView('-1')
         renderer = renderWindow.GetRenderers().GetFirstRenderer()
@@ -460,7 +463,7 @@ class Dicom3D(vtk_protocols.vtkWebProtocol):
         self.resetBox()
 
         # Set default bone preset
-        self.setDefaultPreset()
+        # self.setDefaultPreset()
 
         # Remove actors
         renderer.RemoveAllViewProps()

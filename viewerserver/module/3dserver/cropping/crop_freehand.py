@@ -8,6 +8,7 @@ import time, logging, os
 
 from cropping import utils
 from measurement.utils import AfterInteractorStyle
+from utils.utils import getInfoMemory
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
@@ -190,8 +191,9 @@ class CropFreehandInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
             eventPosition = self.GetInteractor().GetEventPosition()
             self.contour2Dpipeline.isDragging = False
             
-            total_memory, used_memory, free_memory = map(int, os.popen('free -t -m').readlines()[-1].split()[1:])
-            logging.info(f"Total Memory: " + str(total_memory) + "MB" + " - Used Memory: " + str(used_memory) + "MB" + r" - RAM Memory % Used: " + str(round((used_memory/total_memory) * 100, 2)))
+            if getInfoMemory() is not None:
+                total_memory, used_memory, free_memory = getInfoMemory()
+                logging.info(f"Total Memory: " + str(total_memory) + "MB" + " - Used Memory: " + str(used_memory) + "MB" + r" - RAM Memory % Used: " + str(round((used_memory/total_memory) * 100, 2)))
 
             self.__updateGlyphWithNewPosition(eventPosition, True)
             start = time.time()
@@ -200,9 +202,10 @@ class CropFreehandInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
             # print("-----")
             # print("__paintApply():", stop - start)
             
-            total_memory2, used_memory2, free_memory2 = map(int, os.popen('free -t -m').readlines()[-1].split()[1:])
-            logging.info("Total Memory: " + str(total_memory2) + "MB" + " - Used Memory: " + str(used_memory2) + "MB" + r" - RAM Memory % Used: " + str(round((used_memory2/total_memory2) * 100, 2)))
-            logging.info("Cropping freehand tool" + " - Time: " + str(round(stop - start, 3)) + "s" + " - Used Memory: " + str(used_memory2 - used_memory) + "MB" + r" - RAM Memory % Used: " + str(round(((used_memory2/total_memory2) * 100) - ((used_memory/total_memory) * 100), 2)))
+            if getInfoMemory() is not None:
+                total_memory2, used_memory2, free_memory2 = getInfoMemory()
+                logging.info("Total Memory: " + str(total_memory2) + "MB" + " - Used Memory: " + str(used_memory2) + "MB" + r" - RAM Memory % Used: " + str(round((used_memory2/total_memory2) * 100, 2)))
+                logging.info("Cropping freehand tool" + " - Time: " + str(round(stop - start, 3)) + "s" + " - Used Memory: " + str(used_memory2 - used_memory) + "MB" + r" - RAM Memory % Used: " + str(round(((used_memory2/total_memory2) * 100) - ((used_memory/total_memory) * 100), 2)))
 
             renderer.RemoveActor(self.contour2Dpipeline.actor)
             renderer.RemoveActor(self.contour2Dpipeline.actorThin)
