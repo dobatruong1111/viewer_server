@@ -10,7 +10,7 @@ class MyAuth(requests.auth.AuthBase):
         r.headers['Authorization'] = self._auth
         return r
     
-def getInfoMemory(self) -> Optional[tuple]:
+def getInfoMemory() -> Optional[tuple]:
     try:
         total_memory, used_memory, free_memory = map(int, os.popen('free -t -m').readlines()[-1].split()[1:])
         return (total_memory, used_memory, free_memory)

@@ -490,7 +490,7 @@ class Dicom3D(vtk_protocols.vtkWebProtocol):
         return -1
     
     @exportRpc("vtk.dicom3d.panning")
-    def panning(self):
+    def panning(self) -> None:
         renderWindowInteractor = self.getApplication().GetObjectIdMap().GetActiveObject("INTERACTOR")
 
         if self.afterInteractorStyle is None:
