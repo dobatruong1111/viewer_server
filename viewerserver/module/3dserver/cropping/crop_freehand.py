@@ -6,9 +6,8 @@ from enum import Enum
 from typing import List, Tuple
 import time, logging, os
 
-from cropping import utils
+from cropping.utils import calcClipRange, GetImageToWorldMatrix, GetImageToWorldMatrix, SetImageToWorldMatrix, modifyImage
 from measurement.utils import AfterInteractorStyle
-from utils.utils import getInfoMemory
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
@@ -18,6 +17,7 @@ class Operation(Enum):
 
 # Description: Drawing a 2D contour on display coordinates
 class Contour2DPipeline():
+    __slots__ = ["isDragging", "polyData", "mapper", "actor", "polyDataThin", "mapperThin", "actorThin"]
     def __init__(self) -> None:
         # 2D Contour Pipeline
         self.isDragging = False
@@ -68,8 +68,6 @@ class CropFreehandInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
         self.contour2Dpipeline = contour2Dpipeline
         # Origin image data
         self.imageData = imageData
-        self.nshape = tuple(reversed(imageData.GetDimensions())) # (z, y, x)
-        self.imageDataArray = vtk_to_numpy(imageData.GetPointData().GetScalars()).reshape(self.nshape)
         # Image data extends some properties from origin image data such as: 
         # extent, origin, spacing, direction and scalar type
         self.modifierLabelmap = modifierLabelmap
@@ -82,16 +80,7 @@ class CropFreehandInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
         self.afterInteractorStyle = afterInteractorStyle
         # Clipping range
         self.clippingRange = None
-        # Masked image data
-        # self.maskedImageData = vtk.vtkImageData()
-        self.maskedImageData = None
-        # Thresholding of modifierLabelmap
-        self.thresh = vtk.vtkImageThreshold()
-        # Closed surface
-        self.closedSurfacePolyData = vtk.vtkPolyData()
 
-        self.orientedBrushPositionerOutput = vtk.vtkImageData()
-    
         # Events
         self.AddObserver(vtkCommand.LeftButtonPressEvent, self.__leftButtonPressEvent)
         self.AddObserver(vtkCommand.MouseMoveEvent, self.__mouseMoveEvent)
@@ -191,21 +180,8 @@ class CropFreehandInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
             eventPosition = self.GetInteractor().GetEventPosition()
             self.contour2Dpipeline.isDragging = False
             
-            if getInfoMemory() is not None:
-                total_memory, used_memory, free_memory = getInfoMemory()
-                logging.info(f"Total Memory: " + str(total_memory) + "MB" + " - Used Memory: " + str(used_memory) + "MB" + r" - RAM Memory % Used: " + str(round((used_memory/total_memory) * 100, 2)))
-
             self.__updateGlyphWithNewPosition(eventPosition, True)
-            start = time.time()
             self.__paintApply()
-            stop = time.time()
-            # print("-----")
-            # print("__paintApply():", stop - start)
-            
-            if getInfoMemory() is not None:
-                total_memory2, used_memory2, free_memory2 = getInfoMemory()
-                logging.info("Total Memory: " + str(total_memory2) + "MB" + " - Used Memory: " + str(used_memory2) + "MB" + r" - RAM Memory % Used: " + str(round((used_memory2/total_memory2) * 100, 2)))
-                logging.info("Cropping freehand tool" + " - Time: " + str(round(stop - start, 3)) + "s" + " - Used Memory: " + str(used_memory2 - used_memory) + "MB" + r" - RAM Memory % Used: " + str(round(((used_memory2/total_memory2) * 100) - ((used_memory/total_memory) * 100), 2)))
 
             renderer.RemoveActor(self.contour2Dpipeline.actor)
             renderer.RemoveActor(self.contour2Dpipeline.actorThin)
@@ -226,102 +202,106 @@ class CropFreehandInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
         segmentationToWorldMatrix = vtk.vtkMatrix4x4()
         segmentationToWorldMatrix.Identity()
 
-        closedSurfacePoints = vtk.vtkPoints()
-        
-        # Camera parameters
-        # Camera position
-        cameraPos = list(camera.GetPosition())
-        cameraPos.append(1)
-        # Focal point
-        cameraFP = list(camera.GetFocalPoint())
-        cameraFP.append(1)
-        # Direction of projection
-        cameraDOP = [0, 0, 0]
-        for i in range(3):
-            cameraDOP[i] = cameraFP[i] - cameraPos[i]
-        vtkMath.Normalize(cameraDOP)
-        # Camera view up
-        cameraViewUp = list(camera.GetViewUp())
-        vtkMath.Normalize(cameraViewUp)
-        
-        renderer.SetWorldPoint(cameraFP[0], cameraFP[1], cameraFP[2], cameraFP[3])
-        renderer.WorldToDisplay()
-        displayCoords = renderer.GetDisplayPoint()
-        selectionZ = displayCoords[2]
-
-        # Get modifier labelmap extent in camera coordinates to know how much we have to cut through
-        cameraToWorldMatrix = vtk.vtkMatrix4x4()
-        cameraViewRight = [1, 0, 0]
-        vtkMath.Cross(cameraDOP, cameraViewUp, cameraViewRight) # Tich co huong
-        for i in range(3):
-            cameraToWorldMatrix.SetElement(i, 0, cameraViewUp[i])
-            cameraToWorldMatrix.SetElement(i, 1, cameraViewRight[i])
-            cameraToWorldMatrix.SetElement(i, 2, cameraDOP[i])
-            cameraToWorldMatrix.SetElement(i, 3, cameraPos[i])
-        # cameraToWorldMatrix = [cameraViewUp cameraViewRight cameraDOP cameraPos]
-        # print(cameraToWorldMatrix)
-
-        worldToCameraMatrix = vtk.vtkMatrix4x4()
-        vtk.vtkMatrix4x4().Invert(cameraToWorldMatrix, worldToCameraMatrix)
-        # print(worldToCameraMatrix)
-
-        segmentationToCameraTransform = vtk.vtkTransform()
-        segmentationToCameraTransform.Concatenate(worldToCameraMatrix)
-        segmentationToCameraTransform.Concatenate(segmentationToWorldMatrix)
-        # print(segmentationToCameraTransform)
-
-        if self.clippingRange is None:
-            self.clippingRange = utils.calcClipRange(self.modifierLabelmap, segmentationToCameraTransform, camera)
-        
-        for pointIndex in range(numberOfPoints):
-            # Convert the selection point into world coordinates
-            pointXY = pointsXY.GetPoint(pointIndex)
-            renderer.SetDisplayPoint(pointXY[0], pointXY[1], selectionZ)
-            renderer.DisplayToWorld()
-            worldCoords = renderer.GetWorldPoint()
-            if worldCoords[3] == 0:
-                # print("Bad homogeneous coordinates")
-                logging.info("Bad homogeneous coordinates - __updateBrushModel() function - cropping freehand tool")
-                return False
+        def calcClosedSurfacePoints():
+            closedSurfacePoints = vtk.vtkPoints()
             
-            # Convert from homo coordinates to world coordinates
-            pickPosition = [0, 0, 0]
+            # Camera parameters
+            # Camera position
+            cameraPos = list(camera.GetPosition())
+            cameraPos.append(1)
+            # Focal point
+            cameraFP = list(camera.GetFocalPoint())
+            cameraFP.append(1)
+            # Direction of projection
+            cameraDOP = [0, 0, 0]
             for i in range(3):
-                pickPosition[i] = worldCoords[i] / worldCoords[3]
+                cameraDOP[i] = cameraFP[i] - cameraPos[i]
+            vtkMath.Normalize(cameraDOP)
+            # Camera view up
+            cameraViewUp = list(camera.GetViewUp())
+            vtkMath.Normalize(cameraViewUp)
+            
+            renderer.SetWorldPoint(cameraFP[0], cameraFP[1], cameraFP[2], cameraFP[3])
+            renderer.WorldToDisplay()
+            displayCoords = renderer.GetDisplayPoint()
+            selectionZ = displayCoords[2]
 
-            # Compute the ray endpoints. The ray is along the line running from
-            # the camera position to the selection point, starting where this line
-            # intersects the front clipping plane, and terminating where this line
-            # intersects the back clipping plane.
-            ray = [0, 0, 0]
+            # Get modifier labelmap extent in camera coordinates to know how much we have to cut through
+            cameraToWorldMatrix = vtk.vtkMatrix4x4()
+            cameraViewRight = [1, 0, 0]
+            vtkMath.Cross(cameraDOP, cameraViewUp, cameraViewRight) # Tich co huong
             for i in range(3):
-                ray[i] = pickPosition[i] - cameraPos[i] # vector
-            rayLength = vtk.vtkMath().Dot(cameraDOP, ray)
-            if rayLength == 0:
-                # print("Cannot process points")
-                logging.error("Cannot process points - __updateBrushModel() function - cropping freehand tool")
-                return False
+                cameraToWorldMatrix.SetElement(i, 0, cameraViewUp[i])
+                cameraToWorldMatrix.SetElement(i, 1, cameraViewRight[i])
+                cameraToWorldMatrix.SetElement(i, 2, cameraDOP[i])
+                cameraToWorldMatrix.SetElement(i, 3, cameraPos[i])
+            # cameraToWorldMatrix = [cameraViewUp cameraViewRight cameraDOP cameraPos]
+            # print(cameraToWorldMatrix)
 
-            # Finding a point on the near clipping plane and a point on the far clipping plane 
-            # (two points in world coordinates)
-            p1World = [0, 0, 0]
-            p2World = [0, 0, 0]
-            tF = 0
-            tB = 0
-            if camera.GetParallelProjection():
-                tF = self.clippingRange[0] - rayLength
-                tB = self.clippingRange[1] - rayLength
+            worldToCameraMatrix = vtk.vtkMatrix4x4()
+            vtk.vtkMatrix4x4().Invert(cameraToWorldMatrix, worldToCameraMatrix)
+            # print(worldToCameraMatrix)
+
+            segmentationToCameraTransform = vtk.vtkTransform()
+            segmentationToCameraTransform.Concatenate(worldToCameraMatrix)
+            segmentationToCameraTransform.Concatenate(segmentationToWorldMatrix)
+            # print(segmentationToCameraTransform)
+
+            if self.clippingRange is None:
+                self.clippingRange = calcClipRange(self.modifierLabelmap, segmentationToCameraTransform, camera)
+            
+            for pointIndex in range(numberOfPoints):
+                # Convert the selection point into world coordinates
+                pointXY = pointsXY.GetPoint(pointIndex)
+                renderer.SetDisplayPoint(pointXY[0], pointXY[1], selectionZ)
+                renderer.DisplayToWorld()
+                worldCoords = renderer.GetWorldPoint()
+                if worldCoords[3] == 0:
+                    # print("Bad homogeneous coordinates")
+                    logging.info("Bad homogeneous coordinates - __updateBrushModel() function - cropping freehand tool")
+                    return False
+                
+                # Convert from homo coordinates to world coordinates
+                pickPosition = [0, 0, 0]
                 for i in range(3):
-                    p1World[i] = pickPosition[i] + tF * cameraDOP[i]
-                    p2World[i] = pickPosition[i] + tB * cameraDOP[i]
-            else:
-                tF = self.clippingRange[0] / rayLength
-                tB = self.clippingRange[1] / rayLength
+                    pickPosition[i] = worldCoords[i] / worldCoords[3]
+
+                # Compute the ray endpoints. The ray is along the line running from
+                # the camera position to the selection point, starting where this line
+                # intersects the front clipping plane, and terminating where this line
+                # intersects the back clipping plane.
+                ray = [0, 0, 0]
                 for i in range(3):
-                    p1World[i] = cameraPos[i] + tF * ray[i]
-                    p2World[i] = cameraPos[i] + tB * ray[i]
-                closedSurfacePoints.InsertNextPoint(p1World)
-                closedSurfacePoints.InsertNextPoint(p2World)
+                    ray[i] = pickPosition[i] - cameraPos[i] # vector
+                rayLength = vtk.vtkMath().Dot(cameraDOP, ray)
+                if rayLength == 0:
+                    # print("Cannot process points")
+                    logging.error("Cannot process points - __updateBrushModel() function - cropping freehand tool")
+                    return False
+
+                # Finding a point on the near clipping plane and a point on the far clipping plane 
+                # (two points in world coordinates)
+                p1World = [0, 0, 0]
+                p2World = [0, 0, 0]
+                tF = 0
+                tB = 0
+                if camera.GetParallelProjection():
+                    tF = self.clippingRange[0] - rayLength
+                    tB = self.clippingRange[1] - rayLength
+                    for i in range(3):
+                        p1World[i] = pickPosition[i] + tF * cameraDOP[i]
+                        p2World[i] = pickPosition[i] + tB * cameraDOP[i]
+                else:
+                    tF = self.clippingRange[0] / rayLength
+                    tB = self.clippingRange[1] / rayLength
+                    for i in range(3):
+                        p1World[i] = cameraPos[i] + tF * ray[i]
+                        p2World[i] = cameraPos[i] + tB * ray[i]
+                    closedSurfacePoints.InsertNextPoint(p1World)
+                    closedSurfacePoints.InsertNextPoint(p2World)
+            return closedSurfacePolys
+        
+        closedSurfacePoints = calcClosedSurfacePoints()
 
         # Skirt
         closedSurfaceStrips = vtk.vtkCellArray() # object to represent cell connectivity
@@ -346,12 +326,12 @@ class CropFreehandInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
         
         # Construct polydata
         # closedSurfacePolyData = self.contour2Dpipeline.polyData3D
-        # closedSurfacePolyData = vtk.vtkPolyData()
-        self.closedSurfacePolyData.SetPoints(closedSurfacePoints)
-        self.closedSurfacePolyData.SetStrips(closedSurfaceStrips)
-        self.closedSurfacePolyData.SetPolys(closedSurfacePolys)
+        closedSurfacePolyData = vtk.vtkPolyData()
+        closedSurfacePolyData.SetPoints(closedSurfacePoints)
+        closedSurfacePolyData.SetStrips(closedSurfaceStrips)
+        closedSurfacePolyData.SetPolys(closedSurfacePolys)
 
-        self.brushPolyDataNormals.SetInputData(self.closedSurfacePolyData)
+        self.brushPolyDataNormals.SetInputData(closedSurfacePolyData)
         self.brushPolyDataNormals.Update()
 
         return True
@@ -365,7 +345,7 @@ class CropFreehandInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
         self.worldToModifierLabelmapIjkTransform.Identity()
 
         segmentationToSegmentationIjkTransformMatrix = vtk.vtkMatrix4x4()
-        utils.GetImageToWorldMatrix(self.modifierLabelmap, segmentationToSegmentationIjkTransformMatrix)
+        GetImageToWorldMatrix(self.modifierLabelmap, segmentationToSegmentationIjkTransformMatrix)
         segmentationToSegmentationIjkTransformMatrix.Invert()
         self.worldToModifierLabelmapIjkTransform.Concatenate(segmentationToSegmentationIjkTransformMatrix)
 
@@ -383,16 +363,10 @@ class CropFreehandInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
         Set spacing, origin and direction.
     '''
     def __paintApply(self) -> None:
-        # start = time.time()
         if not self.__updateBrushModel():
             return
-        # stop = time.time()
-        # print("__updateBrushModel():", stop-start)
         
-        # start = time.time()
         self.__updateBrushStencil()
-        # stop = time.time()
-        # print("__updateBrushStencil():", stop-start)
 
         self.brushPolyDataToStencil.Update()
     
@@ -407,19 +381,16 @@ class CropFreehandInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
         stencilToImage.SetOutputScalarType(self.modifierLabelmap.GetScalarType()) # vtk.VTK_SHORT: [-32768->32767], vtk.VTK_UNSIGNED_CHAR: [0->255]
         stencilToImage.Update()
 
-        # orientedBrushPositionerOutput = vtk.vtkImageData()
-        self.orientedBrushPositionerOutput.DeepCopy(stencilToImage.GetOutput())
+        orientedBrushPositionerOutput = vtk.vtkImageData()
+        orientedBrushPositionerOutput.DeepCopy(stencilToImage.GetOutput())
 
         imageToWorld = vtk.vtkMatrix4x4()
-        utils.GetImageToWorldMatrix(self.modifierLabelmap, imageToWorld)
+        GetImageToWorldMatrix(self.modifierLabelmap, imageToWorld)
 
-        utils.SetImageToWorldMatrix(self.orientedBrushPositionerOutput, imageToWorld)
+        SetImageToWorldMatrix(self.orientedBrushPositionerOutput, imageToWorld)
 
-        utils.modifyImage(self.modifierLabelmap, self.orientedBrushPositionerOutput)
-        # start = time.time()
+        modifyImage(self.modifierLabelmap, self.orientedBrushPositionerOutput)
         self.__maskVolume()
-        # stop = time.time()
-        # print("__maskVolume():", stop-start)
 
     '''
     Description: Apply the mask for volume and render the new volume
@@ -432,28 +403,34 @@ class CropFreehandInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
         # thresh = vtk.vtkImageThreshold()
         # maskMin = 0
         # maskMax = 1
-        self.thresh.SetOutputScalarTypeToUnsignedChar() # vtk.VTK_UNSIGNED_CHAR: 0-255
-        self.thresh.SetInputData(self.modifierLabelmap)
-        self.thresh.ThresholdByLower(0) # <= 0
-        self.thresh.SetInValue(0)
-        self.thresh.SetOutValue(1)
-        self.thresh.Update()
-        maskImage = self.thresh.GetOutput()
+        thresh = vtk.vtkImageThreshold()
+        thresh.SetOutputScalarTypeToUnsignedChar() # vtk.VTK_UNSIGNED_CHAR: 0-255
+        thresh.SetInputData(self.modifierLabelmap)
+        thresh.ThresholdByLower(0) # <= 0
+        thresh.SetInValue(0)
+        thresh.SetOutValue(1)
+        thresh.Update()
+        # maskImage = self.thresh.GetOutput()
 
-        # Convert binary mask image and origin image data from vtkDataArray (supper class) to numpy
-        maskArray = vtk_to_numpy(maskImage.GetPointData().GetScalars()).reshape(self.nshape).astype(float)
+        def calcNewVolume():
+            nshape = tuple(reversed(self.imageData.GetDimensions())) # (z, y, x)
 
-        resultArray = self.imageDataArray[:] * (1 - maskArray[:]) + float(self.fillValue) * maskArray[:] # -1000 HU: air
+            imageDataArray = vtk_to_numpy(self.imageData.GetPointData().GetScalars()).reshape(nshape)
 
-        result = numpy_to_vtk(resultArray.astype(self.imageDataArray.dtype).reshape(1, -1)[0])
+            # Convert binary mask image and origin image data from vtkDataArray (supper class) to numpy
+            maskArray = vtk_to_numpy(thresh.GetOutput().GetPointData().GetScalars()).reshape(nshape)
+
+            resultArray = (imageDataArray[:] * (1 - maskArray[:]) + float(self.fillValue) * maskArray[:]).astype(imageDataArray.dtype) # -1000 HU: air
+
+            result = numpy_to_vtk(resultArray.reshape(1, -1)[0])
+            return result
         
-        if self.maskedImageData is None:
-            self.maskedImageData = vtk.vtkImageData()
-            self.maskedImageData.SetExtent(self.modifierLabelmap.GetExtent())
-            self.maskedImageData.SetOrigin(self.modifierLabelmap.GetOrigin())
-            self.maskedImageData.SetSpacing(self.modifierLabelmap.GetSpacing())
-            self.maskedImageData.SetDirectionMatrix(self.modifierLabelmap.GetDirectionMatrix())
-        self.maskedImageData.GetPointData().SetScalars(result)
+        maskedImageData = vtk.vtkImageData()
+        maskedImageData.SetExtent(self.modifierLabelmap.GetExtent())
+        maskedImageData.SetOrigin(self.modifierLabelmap.GetOrigin())
+        maskedImageData.SetSpacing(self.modifierLabelmap.GetSpacing())
+        maskedImageData.SetDirectionMatrix(self.modifierLabelmap.GetDirectionMatrix())
+        maskedImageData.GetPointData().SetScalars(calcNewVolume())
         
         # Render the new volume
-        self.mapper.SetInputData(self.maskedImageData)
+        self.mapper.SetInputData(maskedImageData)

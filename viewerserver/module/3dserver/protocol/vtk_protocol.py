@@ -138,7 +138,7 @@ class Dicom3D(vtk_protocols.vtkWebProtocol):
             total_memory, used_memory, free_memory = getInfoMemory()
             logging.info("Total Memory: " + str(total_memory) + "MB" + " - Used Memory: " + str(used_memory) + "MB" + r" - RAM Memory % Used: " + str(round((used_memory/total_memory) * 100, 2)))
 
-        renderWindowInteractor = self.getApplication().GetObjectIdMap().GetActiveObject("INTERACTOR")
+        # renderWindowInteractor = self.getApplication().GetObjectIdMap().GetActiveObject("INTERACTOR")
         renderWindow = self.getView('-1')
         renderer = renderWindow.GetRenderers().GetFirstRenderer()
 
