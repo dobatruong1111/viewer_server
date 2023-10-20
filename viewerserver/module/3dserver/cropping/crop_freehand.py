@@ -4,7 +4,7 @@ from vtk.util.numpy_support import vtk_to_numpy, numpy_to_vtk
 
 from enum import Enum
 from typing import List, Tuple
-import time, logging, os
+import time, logging, os, gc
 
 from cropping.utils import calcClipRange, GetImageToWorldMatrix, GetImageToWorldMatrix, SetImageToWorldMatrix, modifyImage
 from measurement.utils import AfterInteractorStyle
@@ -391,6 +391,9 @@ class CropFreehandInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
 
         modifyImage(self.modifierLabelmap, self.orientedBrushPositionerOutput)
         self.__maskVolume()
+
+        # Garbage collection
+        gc.collect()
 
     '''
     Description: Apply the mask for volume and render the new volume
