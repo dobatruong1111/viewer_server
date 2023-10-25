@@ -415,7 +415,7 @@ class CropFreehandInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
         thresh.Update()
         # maskImage = self.thresh.GetOutput()
 
-        def calcNewVolume():
+        def calcNewImageData():
             nshape = tuple(reversed(self.imageData.GetDimensions())) # (z, y, x)
 
             imageDataArray = vtk_to_numpy(self.imageData.GetPointData().GetScalars()).reshape(nshape)
@@ -426,14 +426,16 @@ class CropFreehandInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
             resultArray = (imageDataArray[:] * (1 - maskArray[:]) + float(self.fillValue) * maskArray[:]).astype(imageDataArray.dtype) # -1000 HU: air
 
             result = numpy_to_vtk(resultArray.reshape(1, -1)[0])
-            return result
-        
-        maskedImageData = vtk.vtkImageData()
-        maskedImageData.SetExtent(self.modifierLabelmap.GetExtent())
-        maskedImageData.SetOrigin(self.modifierLabelmap.GetOrigin())
-        maskedImageData.SetSpacing(self.modifierLabelmap.GetSpacing())
-        maskedImageData.SetDirectionMatrix(self.modifierLabelmap.GetDirectionMatrix())
-        maskedImageData.GetPointData().SetScalars(calcNewVolume())
+
+            maskedImageData = vtk.vtkImageData()
+            maskedImageData.SetExtent(self.modifierLabelmap.GetExtent())
+            maskedImageData.SetOrigin(self.modifierLabelmap.GetOrigin())
+            maskedImageData.SetSpacing(self.modifierLabelmap.GetSpacing())
+            maskedImageData.SetDirectionMatrix(self.modifierLabelmap.GetDirectionMatrix())
+            maskedImageData.GetPointData().SetScalars(result)
+
+            return maskedImageData
         
         # Render the new volume
+        maskedImageData = calcNewImageData()
         self.mapper.SetInputData(maskedImageData)
