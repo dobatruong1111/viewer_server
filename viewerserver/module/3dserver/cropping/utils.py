@@ -2,8 +2,11 @@ import vtk
 from vtk.util.numpy_support import vtk_to_numpy, numpy_to_vtk
 from vtkmodules.vtkCommonCore import vtkMath
 
-import math
-from typing import List, Tuple
+import math, logging
+from typing import List
+from utils.utils import getInfoMemory
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
 '''
 Description: Get the geometry matrix that includes the spacing and origin information
@@ -155,13 +158,20 @@ def modifyImage(
         baseImage: vtk.vtkImageData, 
         modifierImage: vtk.vtkImageData
     ) -> None:
+    # 6337 MB
+
     sourceArray = vtk_to_numpy(modifierImage.GetPointData().GetScalars())
     targetArray = vtk_to_numpy(baseImage.GetPointData().GetScalars())
 
-    result = sourceArray + targetArray
+    # 6337 MB
 
-    baseImage.GetPointData().SetScalars(numpy_to_vtk(result))
-    baseImage.Modified()
+    targetArray[sourceArray > 0] = 1
+
+    # 6337 MB
+
+    baseImage.GetPointData().SetScalars(numpy_to_vtk(targetArray))
+
+    # 6337 MB
 
 def gaussianFilter(
         imageData: vtk.vtkImageData, 

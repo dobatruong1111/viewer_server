@@ -3,6 +3,7 @@ from wslink import register as exportRpc
 
 import vtk
 from vtkmodules.vtkCommonCore import vtkCommand
+from vtk.util.numpy_support import vtk_to_numpy, numpy_to_vtk
 
 from model.colormap import CUSTOM_COLORMAP
 from model.presets import *
@@ -17,7 +18,7 @@ from cropping.utils import IPWCallback
 from panning.panning_3dobject import PanningInteractorStyle
 from utils.utils import getInfoMemory
 
-import time, logging, os
+import logging
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
@@ -33,10 +34,10 @@ class Dicom3D(vtk_protocols.vtkWebProtocol):
         # Pipeline
         self.colors = vtk.vtkNamedColors()
         self.reader = vtk.vtkDICOMImageReader()
-        # self.modifierLabelmap = vtk.vtkImageData()
-        self.modifierLabelmap = None
-        # self.mapper = vtk.vtkSmartVolumeMapper()
-        self.mapper = vtk.vtkFixedPointVolumeRayCastMapper()
+        # self.mask = vtk.vtkImageData()
+        self.mask = None
+        self.mapper = vtk.vtkSmartVolumeMapper()
+        # self.mapper = vtk.vtkFixedPointVolumeRayCastMapper()
         self.volProperty = vtk.vtkVolumeProperty()
         self.volume = vtk.vtkVolume()
         
@@ -134,11 +135,8 @@ class Dicom3D(vtk_protocols.vtkWebProtocol):
 
     @exportRpc("vtk.initialize")
     def createVisualization(self) -> None:
-        if getInfoMemory() is not None:
-            total_memory, used_memory, free_memory = getInfoMemory()
-            logging.info("Total Memory: " + str(total_memory) + "MB" + " - Used Memory: " + str(used_memory) + "MB" + r" - RAM Memory % Used: " + str(round((used_memory/total_memory) * 100, 2)))
+        # 4121 MB
 
-        # renderWindowInteractor = self.getApplication().GetObjectIdMap().GetActiveObject("INTERACTOR")
         renderWindow = self.getView('-1')
         renderer = renderWindow.GetRenderers().GetFirstRenderer()
 
@@ -148,26 +146,34 @@ class Dicom3D(vtk_protocols.vtkWebProtocol):
         self.reader.SetDirectoryName(path)
         self.reader.Update()
 
-        self.imageData = self.reader.GetOutput() # vtkImageData
-        # self.modifierLabelmap.SetExtent(self.imageData.GetExtent())
-        # self.modifierLabelmap.SetOrigin(self.imageData.GetOrigin())
-        # self.modifierLabelmap.SetSpacing(self.imageData.GetSpacing())
-        # self.modifierLabelmap.SetDirectionMatrix(self.imageData.GetDirectionMatrix())
-        # self.modifierLabelmap.AllocateScalars(self.imageData.GetScalarType(), 1)
-        # self.modifierLabelmap.GetPointData().GetScalars().Fill(0)
+        # 4662 MB
+
+        # self.imageData = self.reader.GetOutput() # vtkImageData
+        self.imageData = vtk.vtkImageData()
+        self.imageData.DeepCopy(self.reader.GetOutput())
+
+        # 5201 MB
 
         # Mapper
         self.mapper.SetInputData(self.imageData)
 
+        # 5201 MB
+
         # Volume Property
         self.volProperty.ShadeOn()
+        self.volProperty.SetScalarOpacityUnitDistance(0.1)
+        self.volProperty.SetInterpolationTypeToLinear() # default: Nearest Neighbor
         # Light
         self.volProperty.SetAmbient(0.1)
         self.volProperty.SetDiffuse(0.9)
         self.volProperty.SetSpecular(0.2)
 
+        # 5201 MB
+
         # Color Mapping
         self.colorMappingWithStandardCT()
+
+        # 5201 MB
 
         # Bone CT: Opacity Mapping
         self.scalarOpacity.RemoveAllPoints()
@@ -177,39 +183,13 @@ class Dicom3D(vtk_protocols.vtkWebProtocol):
 
         self.volProperty.SetScalarOpacity(self.scalarOpacity)
 
+        # 5201 MB
+
         # Volume
         self.volume.SetMapper(self.mapper)
         self.volume.SetProperty(self.volProperty)
 
-        # Cropping By Box
-        # self.boxRep.GetOutlineProperty().SetColor(1, 1, 1)
-        # self.boxRep.SetInsideOut(True)
-
-        # self.widget.SetRepresentation(self.boxRep)
-        # self.widget.SetInteractor(renderWindowInteractor)
-        # self.widget.GetRepresentation().SetPlaceFactor(1)
-        # self.widget.GetRepresentation().PlaceWidget(self.reader.GetOutput().GetBounds())
-        # self.widget.SetEnabled(True)
-
-        # ipwcallback = IPWCallback(self.planes, self.mapper)
-        # self.widget.AddObserver(vtk.vtkCommand.InteractionEvent, ipwcallback)
-        # self.widget.Off()
-
-        # Measurement
-        # self.cellPicker.AddPickList(self.volume)
-        # self.cellPicker.PickFromListOn()
-
-        # Cropping Freehand
-        # self.contour2Dpipeline = Contour2DPipeline()
-        # self.cropFreehandInteractorStyle = CropFreehandInteractorStyle(
-        #     contour2Dpipeline=self.contour2Dpipeline,
-        #     imageData=self.imageData,
-        #     modifierLabelmap=self.modifierLabelmap,
-        #     operation=Operation.INSIDE,
-        #     fillValue=-1000,
-        #     mapper=self.mapper,
-        #     afterInteractorStyle=self.afterInteractorStyle
-        # )
+        # 5202 MB
 
         # Render
         renderer.AddVolume(self.volume)
@@ -218,20 +198,7 @@ class Dicom3D(vtk_protocols.vtkWebProtocol):
         # Render Window
         renderWindow.Render()
 
-        # Get original properties of camera
-        # self.focalPoint = renderer.GetActiveCamera().GetFocalPoint()
-        # self.oriPositionOfCamera = renderer.GetActiveCamera().GetPosition()
-        # self.viewUp = renderer.GetActiveCamera().GetViewUp()
-
-        # Render Window Interactor
-        # renderWindowInteractor.SetPicker(self.cellPicker)
-
-        if getInfoMemory() is not None:
-            total_memory2, used_memory2, free_memory2 = getInfoMemory()
-            logging.info("Total Memory: " + str(total_memory2) + "MB" + " - Used Memory: " + str(used_memory2) + "MB" + r" - RAM Memory % Used: " + str(round((used_memory2/total_memory2) * 100, 2)))
-            logging.info("Initialize 3D Object Function" + " - Used Memory: " + str(used_memory2 - used_memory) + "MB" + r" - RAM Memory % Used: " + str(round(((used_memory2/total_memory2) * 100) - ((used_memory/total_memory) * 100), 2)))
-
-        # return self.resetCamera()
+        # 5806 MB
 
     @exportRpc("vtk.dicom3d.light")
     def light(self) -> None:
@@ -323,7 +290,7 @@ class Dicom3D(vtk_protocols.vtkWebProtocol):
             renderWindowInteractor.SetPicker(self.cellPicker)
 
     @exportRpc("vtk.dicom3d.length.measurement")
-    def length_measurement_handle(self) -> None:
+    def lengthMeasurementHandle(self) -> None:
         renderWindowInteractor = self.getApplication().GetObjectIdMap().GetActiveObject("INTERACTOR")
         renderWindow = self.getView('-1')
         renderer = renderWindow.GetRenderers().GetFirstRenderer()
@@ -342,7 +309,7 @@ class Dicom3D(vtk_protocols.vtkWebProtocol):
         self.getApplication().InvokeEvent(vtkCommand.UpdateEvent)
 
     @exportRpc("vtk.dicom3d.angle.measurement")
-    def angle_measurement_handle(self) -> None:
+    def angleMeasurementHandle(self) -> None:
         renderWindowInteractor = self.getApplication().GetObjectIdMap().GetActiveObject("INTERACTOR")
         renderWindow = self.getView('-1')
         renderer = renderWindow.GetRenderers().GetFirstRenderer()
@@ -400,36 +367,45 @@ class Dicom3D(vtk_protocols.vtkWebProtocol):
         self.getApplication().InvokeEvent(vtkCommand.UpdateEvent)
 
     @exportRpc("vtk.dicom3d.crop.freehand")
-    def crop_freehand_handle(self, operation: Operation = Operation.INSIDE, fillValue: int = -1000) -> None:
+    def cropFreehandHandle(self, operation: Operation = Operation.INSIDE, fillValue: int = -1000) -> None:
+        # 5788 MB
+
         renderWindowInteractor = self.getApplication().GetObjectIdMap().GetActiveObject("INTERACTOR")
-        renderWindow = self.getView('-1')
-        renderer = renderWindow.GetRenderers().GetFirstRenderer()
+        renderer = self.getView('-1').GetRenderers().GetFirstRenderer()
 
         if self.contour2Dpipeline is None:
             self.contour2Dpipeline = Contour2DPipeline()
 
-        if self.modifierLabelmap is None:
-            self.modifierLabelmap = vtk.vtkImageData()
-            self.modifierLabelmap.SetExtent(self.imageData.GetExtent())
-            self.modifierLabelmap.SetOrigin(self.imageData.GetOrigin())
-            self.modifierLabelmap.SetSpacing(self.imageData.GetSpacing())
-            self.modifierLabelmap.SetDirectionMatrix(self.imageData.GetDirectionMatrix())
-            self.modifierLabelmap.AllocateScalars(self.imageData.GetScalarType(), 1)
-            self.modifierLabelmap.GetPointData().GetScalars().Fill(0)
+        # 5788 MB
+
+        if self.mask is None:
+            self.mask = vtk.vtkImageData()
+            self.mask.SetExtent(self.imageData.GetExtent())
+            self.mask.SetOrigin(self.imageData.GetOrigin())
+            self.mask.SetSpacing(self.imageData.GetSpacing())
+            self.mask.SetDirectionMatrix(self.imageData.GetDirectionMatrix())
+            # self.mask.AllocateScalars(self.imageData.GetScalarType(), 1)
+            self.mask.AllocateScalars(vtk.VTK_UNSIGNED_CHAR, 1)
+            self.mask.GetPointData().GetScalars().Fill(0)
+
+        # 6058 MB
 
         if self.afterInteractorStyle is None:
             self.afterInteractorStyle = AfterInteractorStyle()
+
+        # 6058 MB
 
         if self.cropFreehandInteractorStyle is None:
             self.cropFreehandInteractorStyle = CropFreehandInteractorStyle(
                 contour2Dpipeline=self.contour2Dpipeline,
                 imageData=self.imageData,
-                modifierLabelmap=self.modifierLabelmap,
+                mask=self.mask,
                 operation=Operation.INSIDE,
                 fillValue=-1000,
-                mapper=self.mapper,
                 afterInteractorStyle=self.afterInteractorStyle
             )
+
+        # 6058 MB
 
         renderer.AddActor(self.contour2Dpipeline.actor)
         renderer.AddActor(self.contour2Dpipeline.actorThin)
@@ -440,24 +416,27 @@ class Dicom3D(vtk_protocols.vtkWebProtocol):
         renderWindowInteractor.SetInteractorStyle(self.cropFreehandInteractorStyle)
         self.getApplication().InvokeEvent(vtkCommand.UpdateEvent)
 
+        # 6058 MB
+
     @exportRpc("vtk.camera.reset")
-    def resetCamera(self) -> None:
+    def resetHandle(self) -> None:
         renderWindowInteractor = self.getApplication().GetObjectIdMap().GetActiveObject("INTERACTOR")
         renderWindow = self.getView('-1')
         renderer = renderWindow.GetRenderers().GetFirstRenderer()
 
-        # Set origin mask volume
-        if self.modifierLabelmap is None:
-            self.modifierLabelmap = vtk.vtkImageData()
-            self.modifierLabelmap.SetExtent(self.imageData.GetExtent())
-            self.modifierLabelmap.SetOrigin(self.imageData.GetOrigin())
-            self.modifierLabelmap.SetSpacing(self.imageData.GetSpacing())
-            self.modifierLabelmap.SetDirectionMatrix(self.imageData.GetDirectionMatrix())
-            self.modifierLabelmap.AllocateScalars(self.imageData.GetScalarType(), 1)
-        self.modifierLabelmap.GetPointData().GetScalars().Fill(0)
+        if not self.mask is None:
+            shape = tuple(reversed(self.reader.GetOutput().GetDimensions())) # (z, y, x)
+            oriImageDataArray = vtk_to_numpy(self.reader.GetOutput().GetPointData().GetScalars()).reshape(shape)
+            maskArray = vtk_to_numpy(self.mask.GetPointData().GetScalars()).reshape(shape)
+            imageDataArray = vtk_to_numpy(self.imageData.GetPointData().GetScalars()).reshape(shape)
+
+            imageDataArray[maskArray > 0] = oriImageDataArray[maskArray > 0]
+
+            self.imageData.GetPointData().SetScalars(numpy_to_vtk(imageDataArray.reshape(1, -1)[0]))
+            self.mask.GetPointData().GetScalars().Fill(0)
 
         # Set origin 3D object
-        self.mapper.SetInputData(self.imageData)
+        # self.mapper.SetInputData(self.imageData)
 
         # Set origin box status
         self.resetBox()
@@ -468,12 +447,6 @@ class Dicom3D(vtk_protocols.vtkWebProtocol):
         # Remove actors
         renderer.RemoveAllViewProps()
         renderer.AddVolume(self.volume)
-
-        # Set original the camera status
-        # renderer.GetActiveCamera().SetFocalPoint(self.focalPoint)
-        # renderer.GetActiveCamera().SetPosition(self.oriPositionOfCamera)
-        # renderer.GetActiveCamera().SetViewUp(self.viewUp)
-        # renderer.ResetCamera()
 
         # Render window
         renderWindow.Render()
@@ -487,7 +460,6 @@ class Dicom3D(vtk_protocols.vtkWebProtocol):
         
         self.getApplication().InvalidateCache(renderWindow)
         self.getApplication().InvokeEvent(vtkCommand.UpdateEvent)
-        return -1
     
     @exportRpc("vtk.dicom3d.panning")
     def panning(self) -> None:
